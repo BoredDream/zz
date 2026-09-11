@@ -1,0 +1,7 @@
+.venv/
+.python_deps/
+node_modules/
+__pycache__/
+*.pyc
+.template_preview/
+
