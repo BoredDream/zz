@@ -369,7 +369,7 @@ for b0 in np.arange(0.0, 1.8, 0.2):
         rec.append(r(float((5.0 * PMAT[v][m] * zz_[v][m]).sum())))
     rows.append(rec)
 w("q4_emergency_by_price_band.csv",
-  ["band_lo", "band_hi", "intervals_42", "intervals_43", "kwh_42", "kwh_43",
+  ["band_lo", "band_hi", "slots", "intervals_42", "intervals_43", "kwh_42", "kwh_43",
    "cost_42", "cost_43"], rows)
 
 # ======================================================================
@@ -655,7 +655,72 @@ assert float(np.abs(PMAT["3"] - PM4[D0:]).max()) == 0.0, "npz.price 与附件4 �
 print("[6] npz.price 交付期与附件4 逐段一致（差 0.0）  ✓")
 assert float(PMAT_FULL.max()) <= 1.8, "全年电价上界超过分箱上界 1.8"
 
-print("\n产出文件（共 18 个）：")
+# =============================================================================
+# 附：SOC 边界触及的精确计数（供图 4-4b）
+#   与 q4_soc_hist.csv 的"末端分箱"不同——这里按**容差 1e-6**判定是否真的贴在下/上界，
+#   分母为交付期 334 天 × 145 个储电量时刻 = 48,430。
+# =============================================================================
+rows = []
+for v in VARIANTS:
+    Sv = SS[v]
+    rows.append([v, int((Sv <= SMIN + 1e-6).sum()), int((Sv >= SMAX - 1e-6).sum()), int(Sv.size)])
+w("q4_soc_band_hits.csv", ["variant", "at_min", "at_max", "n_slots"], rows)
+for r_ in rows:
+    print(f"[8] variant {r_[0]} SOC 贴下界 {r_[1]:,d} / 贴上界 {r_[2]:,d}（分母 {r_[3]:,d}）")
+
+# =============================================================================
+# 附：调整量的逐小时 / 分阶段聚合（供图 4-3b）
+#   口径：模板行（t=0 覆盖 0:10–0:20，t=143 覆盖次日 0:00–0:10）
+#   4-2 无调整机制（q ≡ x），故其四项恒为 0 —— 这一点在下面断言
+# =============================================================================
+STAGE_EDGE = [0, 35, 71, 107, 144]        # 与 TSTAGE 一致（src/q4_solver.py 第 30 行）
+STAGE_HOUR = [0, 6, 12, 18]
+
+
+def _stage_of(t: int) -> int:
+    for m_i in range(4):
+        if STAGE_EDGE[m_i] <= t < STAGE_EDGE[m_i + 1]:
+            return m_i
+    raise AssertionError(f"时段 {t} 不属于任何阶段")
+
+
+adj = {v: q[v] - x[v] for v in VARIANTS}
+up = {v: np.clip(adj[v], 0.0, None) for v in VARIANTS}
+dn = {v: np.clip(-adj[v], 0.0, None) for v in VARIANTS}
+assert float(np.abs(adj["2"]).max()) < 1e-9, "variant 2 应无调整（q ≡ x）"
+
+# 逐小时：模板行时段 t 对应的钟点为 ((t+1)*10) 分钟
+hour_of = np.array([min(((t + 1) * 10) // 60, 23) for t in range(T)])
+rows = [[hh,
+         r(up["2"][:, hour_of == hh].sum()), r(dn["2"][:, hour_of == hh].sum()),
+         r(up["3"][:, hour_of == hh].sum()), r(dn["3"][:, hour_of == hh].sum())]
+        for hh in range(24)]
+w("q4_adjust_by_hour.csv",
+  ["hour", "up_kwh_42", "down_kwh_42", "up_kwh_43", "down_kwh_43"], rows)
+
+# 分阶段：附上 4-3 的调整费（上调 1.5p、下调 0.5p，按交付期实际电价结算）
+rows = []
+for m_i in range(4):
+    idx = np.array([_stage_of(t) == m_i for t in range(T)])
+    rows.append([m_i, STAGE_HOUR[m_i],
+                 r(up["2"][:, idx].sum()), r(dn["2"][:, idx].sum()),
+                 r(up["3"][:, idx].sum()), r(dn["3"][:, idx].sum()),
+                 r((1.5 * PMAT["3"][:, idx] * up["3"][:, idx]).sum()),
+                 r((0.5 * PMAT["3"][:, idx] * dn["3"][:, idx]).sum())])
+w("q4_adjust_by_stage.csv",
+  ["stage", "publish_hour", "up_kwh_42", "down_kwh_42", "up_kwh_43", "down_kwh_43",
+   "up_cost_yuan_43", "down_cost_yuan_43"], rows)
+
+# 自检：模板行逐时段累计净上调，与 totals 的自然日口径对照
+for v in VARIANTS:
+    net_tpl = float(up[v].sum() - dn[v].sum())
+    net_tot = float(tot[v]["adjust_up_kwh"]) - float(tot[v]["adjust_down_kwh"])
+    print(f"[7] variant {v} 模板行净上调 {net_tpl:,.4f} kWh；"
+          f"totals 净上调 {net_tot:,.4f} kWh（口径差 {net_tpl - net_tot:+.4f}，属模板行 vs 自然日）")
+    if v == "3":
+        assert abs(net_tpl - net_tot) < 3.0, f"variant 3 净上调两口径差 {net_tpl - net_tot!r} 偏大"
+
+print("\n产出文件（共 21 个）：")
 for i, p in enumerate(sorted(OUT.iterdir()), 1):
     print(f"  {i:2d}. {p.name}  ({p.stat().st_size} 字节)")
 print(f"\n全部数据已写入 {OUT}")

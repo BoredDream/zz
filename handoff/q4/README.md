@@ -7,9 +7,9 @@
 > **`reports/q4_paper_handoff.md`** 为准（233 行，第 5 节逐项写明"可以写／必须同时写／不能写"）。
 > 本目录只提供素材与图件，不重复定义口径。
 
-> ⚠️ **本轮状态：图尚未绘制。** 已交付的是**前置规划 + 绘图数据 + 绘图脚本入口**；
-> 14 张成图（SVG/PDF/PNG）与图集 PDF 待下一轮。
-> 具体缺口见下面第 7 节。
+> ✅ **本包已完整交付（含 14 张成图与图集）。**
+> 图件在 `figures/`（14 图号 × SVG/PDF/PNG 600 dpi = 42 个文件），
+> 图集为 `图集_第四问_论文版.pdf`（封面 + 14 页）；**逐图说明与可直抄图注见 `figures/README_图表说明.md`**。
 
 ---
 
@@ -40,9 +40,11 @@ handoff/q4/
 ├── scripts/
 │   ├── gen_plot_data.py                        ← 生成 _figdata（只读仓库产物，不重跑求解器）
 │   └── gen_handoff_csvs.py                     ← 生成上面三个根级 CSV
-└── _figdata/                                   ← 绘图数据（18 个文件，全精度）
+└── _figdata/                                   ← 绘图数据（21 个文件，全精度）
     ├── q4_meta.json
     ├── q4_daily_metrics.csv                    ← 334 天 × 2 变体
+    ├── q4_soc_band_hits.csv                    ← SOC 边界触及精确计数（图 4-4b）
+    ├── q4_adjust_by_hour.csv / q4_adjust_by_stage.csv  ← 调整量聚合（图 4-3b）
     ├── q4_price_profile.csv / q4_price_statistics.csv
     ├── q4_price_forecast_error.csv             ← 四阶段 MAPE/MAE（誊抄自 docs/q4_model.md §3）
     ├── q4_target_days_interval.csv             ← 4 个指定日 × 144 段 × 2 变体
@@ -55,8 +57,18 @@ handoff/q4/
     └── q4_independent_verify.csv
 ```
 
-**待补齐（下一轮）**：`figures/`（14 图 × SVG/PDF/PNG + `figs_q4_paper.py` + `README_图表说明.md`）、
-`make_album.py`、`图集_第四问_论文版.pdf`。
+**`figures/`**（14 图 × SVG/PDF/PNG + 绘图主脚本 + 图表说明）：见本节末的完整结构。
+**`图集_第四问_论文版.pdf`**：封面 + 14 页，供一次审阅/打印。
+
+完整结构：
+```
+handoff/q4/
+├── 图集_第四问_论文版.pdf                        ← 封面 + 14 页（1.1 MB）
+├── figures/
+│   ├── figs_q4_paper.py                        ← 唯一主绘图脚本（出图前跑 1,226 项数据审计）
+│   ├── README_图表说明.md                       ← 逐图说明 + 可直抄图注 + 改图指引 + 已知限制
+│   └── fig4_1a … fig4_8  ×14 组 .svg / .pdf / .png(600 dpi)
+└── make_album.py                               ← 装册
 
 ---
 
@@ -64,8 +76,12 @@ handoff/q4/
 
 ```powershell
 cd handoff/q4/scripts
-python gen_plot_data.py          # ① 生成 _figdata（只读仓库产物，不重跑求解器）
+python gen_plot_data.py          # ① 生成 _figdata（21 个文件，只读仓库产物，不重跑求解器）
 python gen_handoff_csvs.py       # ② 生成三个根级 CSV
+cd ../figures
+python figs_q4_paper.py          # ③ 先做 1,226 项数据审计，再出 14 图 × 3 格式
+cd ..
+python make_album.py             # ④ 装册 -> 图集_第四问_论文版.pdf
 ```
 
 依赖：`numpy`、`pandas`、`openpyxl`（读附件用）；出图还需 `matplotlib`、`Pillow`。
@@ -143,12 +159,13 @@ python gen_handoff_csvs.py       # ② 生成三个根级 CSV
 
 | 项目 | 状态 |
 |---|---|
-| 素材包、3 个根级 CSV、`_figdata`、两个生成脚本、图表规划 | ✅ **已交付** |
-| `figures/`（14 图 × SVG/PDF/PNG 600 dpi） | ❌ **未绘制** |
-| `figures/figs_q4_paper.py`（主绘图脚本） | ❌ **未编写** |
-| `figures/README_图表说明.md`（可直抄图注） | ❌ **未编写** |
-| `make_album.py` + `图集_第四问_论文版.pdf` | ❌ **未生成** |
-| `_figdata/` 的 18 个文件 | ✅ 已生成（只读仓库产物，未重跑求解器） |
+| 素材包、3 个根级 CSV、图表规划 | ✅ 已交付 |
+| `_figdata/` 的 21 个文件 | ✅ 已生成（只读仓库产物，未重跑求解器） |
+| `figures/figs_q4_paper.py`（主绘图脚本，含 1,226 项数据审计） | ✅ 已交付 |
+| `figures/` 的 14 图 × SVG/PDF/PNG 600 dpi（42 个文件） | ✅ **已绘制** |
+| `figures/README_图表说明.md`（逐图说明 + 可直抄图注） | ✅ 已交付 |
+| `make_album.py` + `图集_第四问_论文版.pdf`（封面 + 14 页） | ✅ 已生成 |
+| 图 4-6 左下格（第二问结果） | ⚠️ **仍【待补】**——需回查《第二问_论文素材包.md》§D1 |
 
 **出图时须遵循的规范**：《数学建模论文科研绘图指导规范》
 （`E:\onedrive\Desktop\数学建模论文科研绘图指导.md`，915 行）。

@@ -1,0 +1,318 @@
+<?xml version="1.0" encoding="utf-8" standalone="no"?>
+<!DOCTYPE svg PUBLIC "-//W3C//DTD SVG 1.1//EN"
+  "http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd">
+<svg xmlns:xlink="http://www.w3.org/1999/xlink" width="425.95125pt" height="260.109094pt" viewBox="0 0 425.95125 260.109094" xmlns="http://www.w3.org/2000/svg" version="1.1">
+ <metadata>
+  <rdf:RDF xmlns:dc="http://purl.org/dc/elements/1.1/" xmlns:cc="http://creativecommons.org/ns#" xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#">
+   <cc:Work>
+    <dc:type rdf:resource="http://purl.org/dc/dcmitype/StillImage"/>
+    <dc:date>2026-09-12T17:42:45.904744</dc:date>
+    <dc:format>image/svg+xml</dc:format>
+    <dc:creator>
+     <cc:Agent>
+      <dc:title>Matplotlib v3.10.0, https://matplotlib.org/</dc:title>
+     </cc:Agent>
+    </dc:creator>
+   </cc:Work>
+  </rdf:RDF>
+ </metadata>
+ <defs>
+  <style type="text/css">*{stroke-linejoin: round; stroke-linecap: butt}</style>
+ </defs>
+ <g id="figure_1">
+  <g id="patch_1">
+   <path d="M 0 260.109094 
+L 425.95125 260.109094 
+L 425.95125 0 
+L 0 0 
+z
+" style="fill: #ffffff"/>
+  </g>
+  <g id="axes_1">
+   <g id="patch_2">
+    <path d="M 33.91125 232.994687 
+L 424.51125 232.994687 
+L 424.51125 11.234688 
+L 33.91125 11.234688 
+z
+" style="fill: #ffffff"/>
+   </g>
+   <g id="matplotlib.axis_1">
+    <g id="xtick_1">
+     <g id="line2d_1">
+      <defs>
+       <path id="med72332ed0" d="M 0 0 
+L 0 3 
+" style="stroke: #b4bbc2; stroke-width: 0.7"/>
+      </defs>
+      <g>
+       <use xlink:href="#med72332ed0" x="89.71125" y="232.994687" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_1">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(72.71125 246.289375)">确定电价</text>
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(68.301211 256.556047)">× 一次决策</text>
+     </g>
+    </g>
+    <g id="xtick_2">
+     <g id="line2d_2">
+      <g>
+       <use xlink:href="#med72332ed0" x="182.71125" y="232.994687" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_2">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(165.71125 246.289375)">确定电价</text>
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(157.051211 256.556047)">× 四阶段滚动</text>
+     </g>
+    </g>
+    <g id="xtick_3">
+     <g id="line2d_3">
+      <g>
+       <use xlink:href="#med72332ed0" x="275.71125" y="232.994687" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_3">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(258.71125 246.289375)">波动电价</text>
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(254.301211 256.556047)">× 一次决策</text>
+     </g>
+    </g>
+    <g id="xtick_4">
+     <g id="line2d_4">
+      <g>
+       <use xlink:href="#med72332ed0" x="368.71125" y="232.994687" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_4">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(351.71125 246.289375)">波动电价</text>
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; fill: #333333" transform="translate(343.051211 256.556047)">× 四阶段滚动</text>
+     </g>
+    </g>
+   </g>
+   <g id="matplotlib.axis_2">
+    <g id="ytick_1">
+     <g id="line2d_5">
+      <path d="M 33.91125 232.994687 
+L 424.51125 232.994687 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke: #dfe3e7; stroke-opacity: 0.2; stroke-width: 0.5; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_6">
+      <defs>
+       <path id="m12ab240387" d="M 0 0 
+L -3 0 
+" style="stroke: #b4bbc2; stroke-width: 0.7"/>
+      </defs>
+      <g>
+       <use xlink:href="#m12ab240387" x="33.91125" y="232.994687" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_5">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: end; fill: #333333" x="27.41125" y="236.392031" transform="rotate(-0 27.41125 236.392031)">0.0</text>
+     </g>
+    </g>
+    <g id="ytick_2">
+     <g id="line2d_7">
+      <path d="M 33.91125 185.811709 
+L 424.51125 185.811709 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke: #dfe3e7; stroke-opacity: 0.2; stroke-width: 0.5; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_8">
+      <g>
+       <use xlink:href="#m12ab240387" x="33.91125" y="185.811709" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_6">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: end; fill: #333333" x="27.41125" y="189.209053" transform="rotate(-0 27.41125 189.209053)">0.5</text>
+     </g>
+    </g>
+    <g id="ytick_3">
+     <g id="line2d_9">
+      <path d="M 33.91125 138.62873 
+L 424.51125 138.62873 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke: #dfe3e7; stroke-opacity: 0.2; stroke-width: 0.5; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_10">
+      <g>
+       <use xlink:href="#m12ab240387" x="33.91125" y="138.62873" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_7">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: end; fill: #333333" x="27.41125" y="142.026074" transform="rotate(-0 27.41125 142.026074)">1.0</text>
+     </g>
+    </g>
+    <g id="ytick_4">
+     <g id="line2d_11">
+      <path d="M 33.91125 91.445751 
+L 424.51125 91.445751 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke: #dfe3e7; stroke-opacity: 0.2; stroke-width: 0.5; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_12">
+      <g>
+       <use xlink:href="#m12ab240387" x="33.91125" y="91.445751" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_8">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: end; fill: #333333" x="27.41125" y="94.843095" transform="rotate(-0 27.41125 94.843095)">1.5</text>
+     </g>
+    </g>
+    <g id="ytick_5">
+     <g id="line2d_13">
+      <path d="M 33.91125 44.262773 
+L 424.51125 44.262773 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke: #dfe3e7; stroke-opacity: 0.2; stroke-width: 0.5; stroke-linecap: square"/>
+     </g>
+     <g id="line2d_14">
+      <g>
+       <use xlink:href="#m12ab240387" x="33.91125" y="44.262773" style="fill: #b4bbc2; stroke: #b4bbc2; stroke-width: 0.7"/>
+      </g>
+     </g>
+     <g id="text_9">
+      <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: end; fill: #333333" x="27.41125" y="47.660116" transform="rotate(-0 27.41125 47.660116)">2.0</text>
+     </g>
+    </g>
+    <g id="text_10">
+     <text style="font-size: 9.5px; font-family: 'Microsoft YaHei'; text-anchor: middle; fill: #333333" x="9.034063" y="122.114688" transform="rotate(-90 9.034063 122.114688)">交付期总费用 / 元</text>
+    </g>
+    <g id="text_11">
+     <text style="font-size: 8.5px; font-family: 'Microsoft YaHei'; text-anchor: start; fill: #333333" x="33.91125" y="8.234688" transform="rotate(-0 33.91125 8.234688)">1e7</text>
+    </g>
+   </g>
+   <g id="line2d_15">
+    <path d="M 33.91125 108.78377 
+L 424.51125 108.78377 
+" clip-path="url(#p050f1336a7)" style="fill: none; stroke-dasharray: 3.33,1.44; stroke-dashoffset: 0; stroke: #9aa4ae; stroke-width: 0.9"/>
+   </g>
+   <g id="patch_3">
+    <path d="M 33.91125 232.994687 
+L 33.91125 11.234688 
+" style="fill: none; stroke: #b4bbc2; stroke-width: 0.7; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_4">
+    <path d="M 33.91125 232.994687 
+L 424.51125 232.994687 
+" style="fill: none; stroke: #b4bbc2; stroke-width: 0.7; stroke-linejoin: miter; stroke-linecap: square"/>
+   </g>
+   <g id="patch_5">
+    <path d="M 63.67125 232.994687 
+L 115.75125 232.994687 
+L 115.75125 105.600645 
+L 63.67125 105.600645 
+z
+" clip-path="url(#p050f1336a7)" style="fill: url(#h7c2481ba87); stroke: #9aa4ae; stroke-width: 0.9; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_6">
+    <path d="M 156.67125 232.994687 
+L 208.75125 232.994687 
+L 208.75125 108.78377 
+L 156.67125 108.78377 
+z
+" clip-path="url(#p050f1336a7)" style="fill: #9aa4ae; stroke: #9aa4ae; stroke-width: 0.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_7">
+    <path d="M 249.67125 232.994687 
+L 301.75125 232.994687 
+L 301.75125 89.538473 
+L 249.67125 89.538473 
+z
+" clip-path="url(#p050f1336a7)" style="fill: #9aa4ae; stroke: #9aa4ae; stroke-width: 0.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="patch_8">
+    <path d="M 342.67125 232.994687 
+L 394.75125 232.994687 
+L 394.75125 102.318645 
+L 342.67125 102.318645 
+z
+" clip-path="url(#p050f1336a7)" style="fill: #4c6e91; stroke: #3a5470; stroke-width: 0.7; stroke-linejoin: miter"/>
+   </g>
+   <g id="text_12">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; fill: #9aa4ae" transform="translate(74.71125 92.790045)">【待补】</text>
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; fill: #9aa4ae" transform="translate(70.96125 101.848873)">第二问结果</text>
+   </g>
+   <g id="text_13">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; text-anchor: middle; fill: #333333" x="182.71125" y="105.031998" transform="rotate(-0 182.71125 105.031998)">13,162,683</text>
+   </g>
+   <g id="text_14">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; text-anchor: middle; fill: #333333" x="275.71125" y="85.7867" transform="rotate(-0 275.71125 85.7867)">15,202,115</text>
+   </g>
+   <g id="text_15">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; text-anchor: middle; fill: #333333" x="368.71125" y="98.566872" transform="rotate(-0 368.71125 98.566872)">13,847,795</text>
+   </g>
+   <g id="text_16">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; text-anchor: start; fill: #9aa4ae" x="38.59845" y="20.5564" transform="rotate(-0 38.59845 20.5564)">虚线：第三问（确定性电价）13,162,683 元</text>
+   </g>
+   <g id="patch_9">
+    <path d="M 322.328278 31.827364 
+Q 344.940826 63.652728 367.035319 94.748969 
+" style="fill: none; stroke: #a9705a; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 366.520483 91.434615 
+L 367.035319 94.748969 
+L 364.074934 93.172226 
+" style="fill: none; stroke: #a9705a; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="text_17">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; fill: #a9705a" transform="translate(268.27125 17.274413)">−1,354,320.1874 元</text>
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; fill: #a9705a" transform="translate(268.27125 26.333241)">（以 4-2 为基准 −8.91%）</text>
+   </g>
+   <g id="patch_10">
+    <path d="M 323.725971 70.846923 
+Q 322.225226 78.748324 320.891378 85.771007 
+" style="fill: none; stroke: #a9705a; stroke-width: 0.8; stroke-linecap: round"/>
+    <path d="M 322.924827 83.103595 
+L 320.891378 85.771007 
+L 319.977518 82.543801 
+" style="fill: none; stroke: #a9705a; stroke-width: 0.8; stroke-linecap: round"/>
+   </g>
+   <g id="text_18">
+    <text style="font-size: 7.5px; font-family: 'Microsoft YaHei'; text-anchor: start; fill: #a9705a" x="268.27125" y="65.023283" transform="rotate(-0 268.27125 65.023283)">+685,112.0546 元（+5.2050%）</text>
+   </g>
+  </g>
+ </g>
+ <defs>
+  <clipPath id="p050f1336a7">
+   <rect x="33.91125" y="11.234688" width="390.6" height="221.76"/>
+  </clipPath>
+ </defs>
+ <defs>
+  <pattern id="h7c2481ba87" patternUnits="userSpaceOnUse" x="0" y="0" width="72" height="72">
+   <rect x="0" y="0" width="73" height="73" fill="#ffffff"/>
+   <path d="M -36 36 
+L 36 -36 
+M -32 40 
+L 40 -32 
+M -28 44 
+L 44 -28 
+M -24 48 
+L 48 -24 
+M -20 52 
+L 52 -20 
+M -16 56 
+L 56 -16 
+M -12 60 
+L 60 -12 
+M -8 64 
+L 64 -8 
+M -4 68 
+L 68 -4 
+M 0 72 
+L 72 0 
+M 4 76 
+L 76 4 
+M 8 80 
+L 80 8 
+M 12 84 
+L 84 12 
+M 16 88 
+L 88 16 
+M 20 92 
+L 92 20 
+M 24 96 
+L 96 24 
+M 28 100 
+L 100 28 
+M 32 104 
+L 104 32 
+M 36 108 
+L 108 36 
+" style="fill: #9aa4ae; stroke: #9aa4ae; stroke-width: 1.0; stroke-linecap: butt; stroke-linejoin: miter"/>
+  </pattern>
+ </defs>
+</svg>
