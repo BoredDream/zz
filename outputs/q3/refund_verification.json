@@ -1,0 +1,211 @@
+{
+  "refund_policies": [
+    "none_refund",
+    "6_refund",
+    "12_refund",
+    "18_refund",
+    "6+12_refund",
+    "6+18_refund",
+    "12+18_refund",
+    "6+12+18_refund"
+  ],
+  "ledger_checks": [
+    {
+      "settlement_cost_yuan": 13651942.027186174,
+      "emergency_cost_yuan": 1280864.3706819958,
+      "total_cost_yuan": 14932806.39786817,
+      "emergency_kwh": 335575.62444841955,
+      "max_balance_residual_kwh": 1.1368683772161603e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999964,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333333,
+      "simultaneous_intervals": 0,
+      "policy": "none_refund",
+      "reported_total_cost_yuan": 14932806.397868168,
+      "delta_yuan": 1.862645149230957e-09
+    },
+    {
+      "settlement_cost_yuan": 13700106.180937247,
+      "emergency_cost_yuan": 971426.9277687767,
+      "total_cost_yuan": 14671533.108706024,
+      "emergency_kwh": 254220.45598578747,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999957,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "6_refund",
+      "reported_total_cost_yuan": 14671533.108706031,
+      "delta_yuan": -7.450580596923828e-09
+    },
+    {
+      "settlement_cost_yuan": 13599220.943263825,
+      "emergency_cost_yuan": 1049197.7460576275,
+      "total_cost_yuan": 14648418.689321453,
+      "emergency_kwh": 275510.5381326235,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999973,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "12_refund",
+      "reported_total_cost_yuan": 14648418.689321449,
+      "delta_yuan": 3.725290298461914e-09
+    },
+    {
+      "settlement_cost_yuan": 13654456.004986536,
+      "emergency_cost_yuan": 1264445.6235474788,
+      "total_cost_yuan": 14918901.628534015,
+      "emergency_kwh": 332945.5027293277,
+      "max_balance_residual_kwh": 1.1368683772161603e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999964,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "18_refund",
+      "reported_total_cost_yuan": 14918901.628534023,
+      "delta_yuan": -7.450580596923828e-09
+    },
+    {
+      "settlement_cost_yuan": 13583434.83138667,
+      "emergency_cost_yuan": 902471.7395981634,
+      "total_cost_yuan": 14485906.570984833,
+      "emergency_kwh": 236625.52984914888,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999973,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "6+12_refund",
+      "reported_total_cost_yuan": 14485906.570984835,
+      "delta_yuan": -1.862645149230957e-09
+    },
+    {
+      "settlement_cost_yuan": 13702261.656529332,
+      "emergency_cost_yuan": 956286.1284824978,
+      "total_cost_yuan": 14658547.78501183,
+      "emergency_kwh": 251468.51469072132,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999973,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "6+18_refund",
+      "reported_total_cost_yuan": 14658547.785011832,
+      "delta_yuan": -1.862645149230957e-09
+    },
+    {
+      "settlement_cost_yuan": 13601085.820147907,
+      "emergency_cost_yuan": 1040871.8933516282,
+      "total_cost_yuan": 14641957.713499535,
+      "emergency_kwh": 274136.6612988122,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999968,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "12+18_refund",
+      "reported_total_cost_yuan": 14641957.713499531,
+      "delta_yuan": 3.725290298461914e-09
+    },
+    {
+      "settlement_cost_yuan": 13585257.013531018,
+      "emergency_cost_yuan": 894314.9842795536,
+      "total_cost_yuan": 14479571.997810572,
+      "emergency_kwh": 235278.63828951368,
+      "max_balance_residual_kwh": 2.2737367544323206e-13,
+      "max_soc_residual_kwh": 9.094947017729282e-13,
+      "soc_min_kwh": 1199.9999999999977,
+      "soc_max_kwh": 10800.000000000004,
+      "max_interval_storage_kwh": 833.3333333333335,
+      "simultaneous_intervals": 0,
+      "policy": "6+12+18_refund",
+      "reported_total_cost_yuan": 14479571.997810567,
+      "delta_yuan": 5.587935447692871e-09
+    }
+  ],
+  "lp_checks": {
+    "none_refund": {
+      "checked_issues": 0,
+      "worst_gap_yuan": 0.0,
+      "worst_gap_issue": "",
+      "max_contract_gap_kwh": 0.0,
+      "max_contract_gap_issue": "",
+      "contract_diff_issues": 0,
+      "trajectory_diff_issues": 0
+    },
+    "6_refund": {
+      "checked_issues": 334,
+      "worst_gap_yuan": 2.546585164964199e-11,
+      "worst_gap_issue": "2025-10-02 6:00",
+      "max_contract_gap_kwh": 362.09807788065547,
+      "max_contract_gap_issue": "2025-04-22 6:00",
+      "contract_diff_issues": 9,
+      "trajectory_diff_issues": 81
+    },
+    "12_refund": {
+      "checked_issues": 334,
+      "worst_gap_yuan": -1.4551915228366852e-11,
+      "worst_gap_issue": "2025-06-18 12:00",
+      "max_contract_gap_kwh": 2.827874999999949,
+      "max_contract_gap_issue": "2025-02-09 12:00",
+      "contract_diff_issues": 1,
+      "trajectory_diff_issues": 78
+    },
+    "18_refund": {
+      "checked_issues": 334,
+      "worst_gap_yuan": 7.275957614183426e-12,
+      "worst_gap_issue": "2025-06-18 18:00",
+      "max_contract_gap_kwh": 2.2737367544323206e-13,
+      "max_contract_gap_issue": "2025-08-26 18:00",
+      "contract_diff_issues": 0,
+      "trajectory_diff_issues": 0
+    },
+    "6+12_refund": {
+      "checked_issues": 668,
+      "worst_gap_yuan": 2.546585164964199e-11,
+      "worst_gap_issue": "2025-10-02 6:00",
+      "max_contract_gap_kwh": 362.09807788065547,
+      "max_contract_gap_issue": "2025-04-22 6:00",
+      "contract_diff_issues": 10,
+      "trajectory_diff_issues": 161
+    },
+    "6+18_refund": {
+      "checked_issues": 668,
+      "worst_gap_yuan": 2.546585164964199e-11,
+      "worst_gap_issue": "2025-10-02 6:00",
+      "max_contract_gap_kwh": 362.09807788065547,
+      "max_contract_gap_issue": "2025-04-22 6:00",
+      "contract_diff_issues": 9,
+      "trajectory_diff_issues": 81
+    },
+    "12+18_refund": {
+      "checked_issues": 668,
+      "worst_gap_yuan": -1.4551915228366852e-11,
+      "worst_gap_issue": "2025-06-18 12:00",
+      "max_contract_gap_kwh": 2.827874999999949,
+      "max_contract_gap_issue": "2025-02-09 12:00",
+      "contract_diff_issues": 1,
+      "trajectory_diff_issues": 78
+    },
+    "6+12+18_refund": {
+      "checked_issues": 1002,
+      "worst_gap_yuan": 2.546585164964199e-11,
+      "worst_gap_issue": "2025-10-02 6:00",
+      "max_contract_gap_kwh": 362.09807788065547,
+      "max_contract_gap_issue": "2025-04-22 6:00",
+      "contract_diff_issues": 10,
+      "trajectory_diff_issues": 161
+    }
+  },
+  "failures": [],
+  "passed": true,
+  "sample": 0
+}
