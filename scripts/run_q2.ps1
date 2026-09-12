@@ -44,5 +44,6 @@ if (Test-Path -LiteralPath $BundledNode) {
     node (Join-Path $RepoRoot "scripts\build_result2.mjs")
 }
 
-Write-Output "第二问全部结果已生成。"
+& $VenvPython -X utf8 (Join-Path $RepoRoot "scripts\validate_q2.py")
 
+Write-Output "第二问全部结果已生成。"
