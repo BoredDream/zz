@@ -49,14 +49,29 @@
 3. 附件原始列 `0:10, ..., 0:00+1` 映射到绝对时刻，不做同一行循环移位。
 4. 模板每行是当天0:00发布、覆盖00:10至次日00:10的同一版计划；自然日00:00购电来自上一日计划末列。
 5. 每天0:00制定计划时，只使用已完整出现的历史轮廓；当日实际数据仅在对应时段到达后用于因果储能补救和结算。
-6. 充电量和放电量均定义在交流母线侧，SOC递推为
-   `S[t+1] = S[t] + 0.9*C[t] - D[t]/0.9`。问题1、2、3、4 均适用。
+6. 充电量和放电量均定义在交流母线侧，SOC递推统一为
+   `S[t+1] = S[t] + eta_charge*C[t] - D[t]/eta_discharge`。Q1–Q4 的效率参数均来自
+   `src/efficiency.py`；既有正式结果的默认值仍为两端各 0.9（往返 0.81）。
 7. 第三问结算采用题面口径 `C = p*min(x,q) + 1.5p*(q-x)^+ + 0.5p*(x-q)^+ + 5p*z`：
    只对实际取用的电量付基价，下调部分另收50%违约金。"计划费沉没、逐笔计收调整费"
    是另一种口径，仅作对照，不与本口径混算。第四问沿用同一式，只把 `p` 换成
    附件4 的**实际**波动电价——预测值只参与决策，不参与结算。
 
 ## 运行
+
+效率口径对照（不覆盖正式交付产物）：
+
+```powershell
+$env:PYTHONPATH="src"
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q1 roundtrip90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q2 roundtrip90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q3 roundtrip90 --K 30
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-2 roundtrip90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-3 roundtrip90 --K 30
+```
+
+`roundtrip90` 取 `eta_charge=eta_discharge=sqrt(0.90)`；`oneway90` 取两端各 0.90。
+汇总结果见 `outputs/efficiency_sensitivity/`。
 
 第一问（单日确定性优化）单独运行：
 

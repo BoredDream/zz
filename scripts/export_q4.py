@@ -100,12 +100,15 @@ if __name__ == "__main__":
 
     meta = {"model": "q4_fluctuating_price_two_stage_saa", "variant": which,
             "storage_convention": "bus_side_charge_and_discharge",
-            "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
+            "soc_recursion": "S[t] = S[t-1] + eta_charge*c[t] - g[t]/eta_discharge",
             "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
             "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
             "settlement_price": "actual_price_附件4",
             "scenarios_K": K, "stages": list(stages), "elapsed_seconds": elapsed,
-            "eta": M.ETA, "interval_limit_kwh": M.CMAX,
+            "eta": M.ETA_CHARGE, "eta_charge": M.ETA_CHARGE,
+            "eta_discharge": M.ETA_DISCHARGE,
+            "roundtrip_efficiency": M.ETA_CHARGE * M.ETA_DISCHARGE,
+            "interval_limit_kwh": M.CMAX,
             "delivery_period": {"start": DELIVERY_START+"T00:00", "end": "2026-01-01T00:00", "days": len(out_days)},
             "variant2_base_model": "q2_solver" if which == "2" else None,
             "cold_start": q2data["q4_cold_price_source"] if which == "2" else

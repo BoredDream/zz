@@ -1,0 +1,31 @@
+{
+  "question": "q2",
+  "scenario": "oneway90",
+  "efficiency": {
+    "eta_charge": 0.9,
+    "eta_discharge": 0.9,
+    "roundtrip_efficiency": 0.81
+  },
+  "elapsed_seconds": 151.06726459998754,
+  "capacity": {
+    "optimized": false,
+    "installed_capacity_kwh": 12000.0
+  },
+  "metrics": {
+    "total_purchase_cost_yuan": 14455427.634039497,
+    "planned_purchase_cost_yuan": 12833056.45303883,
+    "total_purchase_kwh": 21023444.107740413,
+    "planned_purchase_kwh": 20755750.908379737,
+    "charge_kwh": 6171586.855676625,
+    "discharge_kwh": 4999520.940541623,
+    "curtail_kwh": 1912424.4009720748,
+    "emergency_purchase_kwh": 267693.19936067454,
+    "adjustment_cost_yuan": 0.0
+  },
+  "strategy": {
+    "charge_intervals": 22996,
+    "discharge_intervals": 18522,
+    "curtail_intervals": 8133,
+    "emergency_intervals": 1460
+  }
+}

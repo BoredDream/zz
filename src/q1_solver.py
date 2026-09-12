@@ -13,13 +13,15 @@ from openpyxl import load_workbook
 from scipy.optimize import linprog
 from scipy.sparse import coo_matrix
 
+from efficiency import DEFAULT_EFFICIENCY
+
 
 @dataclass(frozen=True)
 class Config:
     dt_hours: float = 1 / 6
     intervals_per_day: int = 144
-    eta_charge: float = 0.90
-    eta_discharge: float = 0.90
+    eta_charge: float = DEFAULT_EFFICIENCY.eta_charge
+    eta_discharge: float = DEFAULT_EFFICIENCY.eta_discharge
     power_limit_kw: float = 5000.0
     soc_min_kwh: float = 1200.0
     soc_max_kwh: float = 10800.0

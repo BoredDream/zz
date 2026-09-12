@@ -18,7 +18,7 @@
 
 储能口径（与问题 1/2 的固定口径一致，见 README「固定口径」第 6 条）：
     充电量 c 与放电量 g 均定义在交流母线侧，SOC 递推为
-        S_j = S_{j-1} + eta*c_j - g_j/eta
+        S_j = S_{j-1} + eta_c*c_j - g_j/eta_d
     充、放电的单时段上限同为 CMAX=5000*DT kWh（母线侧），
     故放电一个 CMAX 会消耗 CMAX/eta 的储电量。
 """
@@ -28,13 +28,18 @@ import numpy as np, pandas as pd, scipy.sparse as sp
 from scipy.optimize import linprog
 from scipy.interpolate import PchipInterpolator
 
+from efficiency import DEFAULT_EFFICIENCY, EfficiencyParameters
+
 # ----------------------------------------------------------------------
 # 0. 参数与数据
 # ----------------------------------------------------------------------
 import os
 UP = os.environ.get('Q3_DATA', str(Path(__file__).resolve().parent.parent / 'problem' / 'data')) + os.sep
 T, DT = 144, 1/6.0                     # 时段数、时段长(h)
-ETA = 0.9                              # 充/放电效率(各 0.9)
+ETA_CHARGE = DEFAULT_EFFICIENCY.eta_charge
+ETA_DISCHARGE = DEFAULT_EFFICIENCY.eta_discharge
+# Compatibility alias retained for older reporting/verification utilities.
+ETA = ETA_CHARGE
 SMIN, SMAX = 1200.0, 10800.0
 CMAX = 5000 * DT                       # 单时段最大充/放电量 kWh（交流母线侧，与问题1/2同）
 LAM = 0.478                            # 末端储能水价 元/kWh = p_谷/eta
@@ -42,6 +47,14 @@ ALPHA = 5.0                            # LP 中紧急电价倍数(真实为 5，
 TSTAGE = [0, 35, 71, 107, 144]         # 各阶段起始时段（含哨兵 144）
 H0 = [0, 6, 12, 18]                    # 各阶段发布时刻(小时)
 WCOMB = [0.4, 0.6, 0.9, 0.4]           # 附件3预报与衰减均值的组合权重(已标定)
+
+
+def set_efficiency(parameters: EfficiencyParameters) -> None:
+    """Set the efficiency convention before a backtest."""
+    global ETA_CHARGE, ETA_DISCHARGE, ETA
+    ETA_CHARGE = parameters.eta_charge
+    ETA_DISCHARGE = parameters.eta_discharge
+    ETA = ETA_CHARGE
 
 _dl = pd.read_excel(UP+'附件2.xlsx', sheet_name='小区负载', header=0)
 DATES = pd.to_datetime(_dl.iloc[:, 0])
@@ -198,7 +211,7 @@ def stage_lp(m, x_ref, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM, commit_end=Non
             beq.append(scenL[k][t] - scenG[k][t]); nr += 1
         # 等式 2：SOC 转移  S_j = S_{j-1} + eta*c_j - g_j/eta
         for j in range(nT):
-            for cc, vv in ((oS+j, 1.0), (oc+j, -ETA), (og+j, 1.0/ETA)):
+            for cc, vv in ((oS+j, 1.0), (oc+j, -ETA_CHARGE), (og+j, 1.0/ETA_DISCHARGE)):
                 rows.append(nr); cols.append(cc); vals.append(vv)
             if j > 0:
                 rows.append(nr); cols.append(oS+j-1); vals.append(-1.0); beq.append(0.0)
@@ -288,7 +301,7 @@ def stage0_lp_145(committed_q, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM, commit
             beq.append(float(rhs)); nr += 1
 
         for h in range(H):
-            for cc, vv in ((oS+h, 1.0), (oc+h, -ETA), (og+h, 1.0/ETA)):
+            for cc, vv in ((oS+h, 1.0), (oc+h, -ETA_CHARGE), (og+h, 1.0/ETA_DISCHARGE)):
                 rows.append(nr); cols.append(cc); vals.append(vv)
             if h:
                 rows.append(nr); cols.append(oS+h-1); vals.append(-1.0)
@@ -328,12 +341,12 @@ def dispatch(t0, t1, q, S, Lr, Gr, out):
     for t in range(t0, t1):
         net = Lr[t] - Gr[t] - q[t]
         if net > 0:
-            g = max(min(net, CMAX, (S-SMIN)*ETA), 0.0)
-            out['g'][t] = g; S -= g/ETA; out['z'][t] = net - g
+            g = max(min(net, CMAX, (S-SMIN)*ETA_DISCHARGE), 0.0)
+            out['g'][t] = g; S -= g/ETA_DISCHARGE; out['z'][t] = net - g
         else:
             s = -net
-            cc = max(min(s, CMAX, (SMAX-S)/ETA), 0.0)
-            out['c'][t] = cc; S += ETA*cc; out['w'][t] = s - cc
+            cc = max(min(s, CMAX, (SMAX-S)/ETA_CHARGE), 0.0)
+            out['c'][t] = cc; S += ETA_CHARGE*cc; out['w'][t] = s - cc
         out['S'][t] = S
     return S
 
@@ -343,12 +356,12 @@ def dispatch_locked_interval(q, S, load, pv):
     net = float(load - pv - q)
     c = g = z = w = 0.0
     if net > 0:
-        g = max(min(net, CMAX, (S-SMIN)*ETA), 0.0)
-        S -= g/ETA; z = net-g
+        g = max(min(net, CMAX, (S-SMIN)*ETA_DISCHARGE), 0.0)
+        S -= g/ETA_DISCHARGE; z = net-g
     else:
         surplus = -net
-        c = max(min(surplus, CMAX, (SMAX-S)/ETA), 0.0)
-        S += ETA*c; w = surplus-c
+        c = max(min(surplus, CMAX, (SMAX-S)/ETA_CHARGE), 0.0)
+        S += ETA_CHARGE*c; w = surplus-c
     return S, dict(c=c, g=g, z=z, w=w)
 
 # ----------------------------------------------------------------------

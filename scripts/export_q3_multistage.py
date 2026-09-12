@@ -95,11 +95,14 @@ if __name__ == "__main__":
 
     meta = {"model": "multistage_rolling_SAA_scenario_branched_recourse",
             "storage_convention": "bus_side_charge_and_discharge",
-            "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
+            "soc_recursion": "S[t] = S[t-1] + eta_charge*c[t] - g[t]/eta_discharge",
             "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
             "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
             "stage0_horizon_intervals": 145, "scenarios_K": K, "stages": list(stages), "tag": tag,
-            "elapsed_seconds": elapsed, "eta": M.ETA, "interval_limit_kwh": M.CMAX,
+            "elapsed_seconds": elapsed, "eta": M.ETA_CHARGE,
+            "eta_charge": M.ETA_CHARGE, "eta_discharge": M.ETA_DISCHARGE,
+            "roundtrip_efficiency": M.ETA_CHARGE * M.ETA_DISCHARGE,
+            "interval_limit_kwh": M.CMAX,
             "delivery_period": {"start": DELIVERY_START, "end": M.DSTR[days[-1]], "days": len(out_days)},
             "totals": totals}
     (OUT / f"payload_stages{tag}_K{K}.json").write_text(

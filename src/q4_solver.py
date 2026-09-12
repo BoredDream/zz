@@ -27,10 +27,24 @@ from pathlib import Path
 import numpy as np, pandas as pd, scipy.sparse as sp
 from scipy.optimize import linprog
 
-from q3_multistage import (UP, T, DT, ETA, SMIN, SMAX, CMAX, LAM, TSTAGE, ND, P,
+import q3_multistage as Q3BASE
+from q3_multistage import (UP, T, DT, ETA_CHARGE, ETA_DISCHARGE, SMIN, SMAX, CMAX, LAM, TSTAGE, ND, P,
                            DATES, DSTR, L, G, load_hat, pv_hat, dispatch,
                            clock_min, dispatch_locked_interval, midnight_center,
                            midnight_actual, natural_emergency_segments)
+from efficiency import EfficiencyParameters
+
+# Compatibility alias for existing validators when both one-way efficiencies match.
+ETA = ETA_CHARGE
+
+
+def set_efficiency(parameters: EfficiencyParameters) -> None:
+    """Set the efficiency convention before a backtest."""
+    global ETA_CHARGE, ETA_DISCHARGE, ETA
+    Q3BASE.set_efficiency(parameters)
+    ETA_CHARGE = parameters.eta_charge
+    ETA_DISCHARGE = parameters.eta_discharge
+    ETA = ETA_CHARGE
 
 # ----------------------------------------------------------------------
 # 0. 电价数据
@@ -106,7 +120,7 @@ def price_hat(d, m):
 
 def water_value(phat):
     """末端储能水价：用当日预测的最低 12 个时段均价折算的重置成本 p_谷/η。"""
-    return float(np.sort(phat)[:12].mean() / ETA)
+    return float(np.sort(phat)[:12].mean() / ETA_DISCHARGE)
 
 # ----------------------------------------------------------------------
 # 2. 联合场景生成（价格 / 负载 / 光伏必须同日配对抽样以保留相关性）
@@ -225,7 +239,7 @@ def stage_lp4(m, x_ref, S_cur, scenL, scenG, scenP, pdet,
                 rows.append(nr); cols.append(cc); vals.append(vv)
             beq.append(scenL[k][t] - scenG[k][t]); nr += 1
         for j in range(nT):                    # SOC 转移 S_j = S_{j-1} + eta*c_j - g_j/eta
-            for cc, vv in ((oS+j, 1.0), (oc+j, -ETA), (og+j, 1.0/ETA)):
+            for cc, vv in ((oS+j, 1.0), (oc+j, -ETA_CHARGE), (og+j, 1.0/ETA_DISCHARGE)):
                 rows.append(nr); cols.append(cc); vals.append(vv)
             if j > 0:
                 rows.append(nr); cols.append(oS+j-1); vals.append(-1.0); beq.append(0.0)
@@ -287,7 +301,7 @@ def stage0_lp4_145(committed_q, S_cur, scenL, scenG, scenP, pdet, lam):
                 rows.append(nr); cols.append(cc); vals.append(vv)
             beq.append(float(rhs)); nr+=1
         for h in range(H):
-            for cc,vv in ((oS+h,1.0),(oc+h,-ETA),(og+h,1.0/ETA)):
+            for cc,vv in ((oS+h,1.0),(oc+h,-ETA_CHARGE),(og+h,1.0/ETA_DISCHARGE)):
                 rows.append(nr); cols.append(cc); vals.append(vv)
             if h:
                 rows.append(nr); cols.append(oS+h-1); vals.append(-1.0); beq.append(0.0)
