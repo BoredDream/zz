@@ -1,0 +1,283 @@
+{
+  "model": "q3_multistage_current_145_interval_natural_day",
+  "K": 30,
+  "delivery_days": 334,
+  "baseline": "0-only",
+  "best_policy": "0+6+12+18",
+  "rows": [
+    {
+      "policy": "0-only",
+      "stages": [
+        0
+      ],
+      "adjustment_times": [],
+      "total_cost_yuan": 13785061.761447709,
+      "plan_cost_yuan": 12875904.71482774,
+      "adjust_cost_yuan": 0.0,
+      "emergency_cost_yuan": 909157.0466199679,
+      "emergency_kwh": 149380.19417735955,
+      "charge_kwh": 6530238.517727156,
+      "discharge_kwh": 5289864.18780617,
+      "curtail_kwh": 1700810.8791787785,
+      "adjust_up_kwh": 0.0,
+      "adjust_down_kwh": 0.0,
+      "saving_vs_0_only_yuan": 0.0,
+      "saving_vs_0_only_pct": 0.0,
+      "rank": 8
+    },
+    {
+      "policy": "0+6",
+      "stages": [
+        0,
+        1
+      ],
+      "adjustment_times": [
+        "6:00"
+      ],
+      "total_cost_yuan": 13624463.682512127,
+      "plan_cost_yuan": 12182699.340831976,
+      "adjust_cost_yuan": 844062.3237333224,
+      "emergency_cost_yuan": 597702.0179468319,
+      "emergency_kwh": 94954.31148298745,
+      "charge_kwh": 6881176.041355286,
+      "discharge_kwh": 5574180.80505221,
+      "curtail_kwh": 1526440.541251355,
+      "adjust_up_kwh": 661447.14794869,
+      "adjust_down_kwh": 126113.24880707578,
+      "saving_vs_0_only_yuan": 160598.0789355822,
+      "saving_vs_0_only_pct": 1.1650153021782048,
+      "rank": 7
+    },
+    {
+      "policy": "0+12",
+      "stages": [
+        0,
+        2
+      ],
+      "adjustment_times": [
+        "12:00"
+      ],
+      "total_cost_yuan": 13512386.66634119,
+      "plan_cost_yuan": 12266488.230033545,
+      "adjust_cost_yuan": 635846.8721003239,
+      "emergency_cost_yuan": 610051.5642073093,
+      "emergency_kwh": 105905.61839430628,
+      "charge_kwh": 6778807.4125360325,
+      "discharge_kwh": 5491183.84475128,
+      "curtail_kwh": 1386309.8344695081,
+      "adjust_up_kwh": 486438.5183430427,
+      "adjust_down_kwh": 185185.46016929767,
+      "saving_vs_0_only_yuan": 272675.09510651976,
+      "saving_vs_0_only_pct": 1.9780476854235245,
+      "rank": 6
+    },
+    {
+      "policy": "0+18",
+      "stages": [
+        0,
+        3
+      ],
+      "adjustment_times": [
+        "18:00"
+      ],
+      "total_cost_yuan": 13376118.11662,
+      "plan_cost_yuan": 12531344.045919085,
+      "adjust_cost_yuan": 495089.4559098442,
+      "emergency_cost_yuan": 349684.6147910642,
+      "emergency_kwh": 67050.90684002782,
+      "charge_kwh": 6705595.846155649,
+      "discharge_kwh": 5431865.616232964,
+      "curtail_kwh": 1629909.9751721986,
+      "adjust_up_kwh": 255948.27645939795,
+      "adjust_down_kwh": 14104.678986896126,
+      "saving_vs_0_only_yuan": 408943.6448277086,
+      "saving_vs_0_only_pct": 2.9665710020348963,
+      "rank": 4
+    },
+    {
+      "policy": "0+6+12",
+      "stages": [
+        0,
+        1,
+        2
+      ],
+      "adjustment_times": [
+        "6:00",
+        "12:00"
+      ],
+      "total_cost_yuan": 13388526.327757271,
+      "plan_cost_yuan": 12127958.195700768,
+      "adjust_cost_yuan": 817421.7118903779,
+      "emergency_cost_yuan": 443146.4201661315,
+      "emergency_kwh": 72646.741942112,
+      "charge_kwh": 6919699.291336846,
+      "discharge_kwh": 5605306.0916297035,
+      "curtail_kwh": 1320369.327931856,
+      "adjust_up_kwh": 605802.5123890301,
+      "adjust_down_kwh": 244937.4950167561,
+      "saving_vs_0_only_yuan": 396535.43369043805,
+      "saving_vs_0_only_pct": 2.8765589922811765,
+      "rank": 5
+    },
+    {
+      "policy": "0+6+18",
+      "stages": [
+        0,
+        1,
+        3
+      ],
+      "adjustment_times": [
+        "6:00",
+        "18:00"
+      ],
+      "total_cost_yuan": 13286554.087721031,
+      "plan_cost_yuan": 12168120.555400308,
+      "adjust_cost_yuan": 911332.0041364742,
+      "emergency_cost_yuan": 207101.52818424834,
+      "emergency_kwh": 37471.13574658649,
+      "charge_kwh": 6863181.110960256,
+      "discharge_kwh": 5559509.680724694,
+      "curtail_kwh": 1431471.2007654242,
+      "adjust_up_kwh": 640129.3292361717,
+      "adjust_down_kwh": 157296.10262429228,
+      "saving_vs_0_only_yuan": 498507.6737266779,
+      "saving_vs_0_only_pct": 3.6162890116375115,
+      "rank": 2
+    },
+    {
+      "policy": "0+12+18",
+      "stages": [
+        0,
+        2,
+        3
+      ],
+      "adjustment_times": [
+        "12:00",
+        "18:00"
+      ],
+      "total_cost_yuan": 13288096.326997822,
+      "plan_cost_yuan": 12251679.65734434,
+      "adjust_cost_yuan": 655671.1456551434,
+      "emergency_cost_yuan": 380745.523998332,
+      "emergency_kwh": 71755.90405786682,
+      "charge_kwh": 6782409.341431463,
+      "discharge_kwh": 5494084.547406371,
+      "curtail_kwh": 1326510.6197793696,
+      "adjust_up_kwh": 469902.18123165885,
+      "adjust_down_kwh": 206565.6140907344,
+      "saving_vs_0_only_yuan": 496965.4344498869,
+      "saving_vs_0_only_pct": 3.605101254168741,
+      "rank": 3
+    },
+    {
+      "policy": "0+6+12+18",
+      "stages": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "adjustment_times": [
+        "6:00",
+        "12:00",
+        "18:00"
+      ],
+      "total_cost_yuan": 13162682.885500716,
+      "plan_cost_yuan": 12114099.71636921,
+      "adjust_cost_yuan": 833624.8961012338,
+      "emergency_cost_yuan": 214958.2730302681,
+      "emergency_kwh": 38737.747832720306,
+      "charge_kwh": 6921852.87919573,
+      "discharge_kwh": 5607033.812995429,
+      "curtail_kwh": 1258785.6073165124,
+      "adjust_up_kwh": 585146.1292687943,
+      "adjust_down_kwh": 265196.70369861444,
+      "saving_vs_0_only_yuan": 622378.875946993,
+      "saving_vs_0_only_pct": 4.51487912580546,
+      "rank": 1
+    }
+  ],
+  "conditional_marginal_savings": {
+    "6:00": [
+      {
+        "context": [],
+        "saving_yuan": 160598.0789355822
+      },
+      {
+        "context": [
+          "12:00"
+        ],
+        "saving_yuan": 123860.33858391829
+      },
+      {
+        "context": [
+          "18:00"
+        ],
+        "saving_yuan": 89564.02889896929
+      },
+      {
+        "context": [
+          "12:00",
+          "18:00"
+        ],
+        "saving_yuan": 125413.4414971061
+      }
+    ],
+    "12:00": [
+      {
+        "context": [],
+        "saving_yuan": 272675.09510651976
+      },
+      {
+        "context": [
+          "6:00"
+        ],
+        "saving_yuan": 235937.35475485586
+      },
+      {
+        "context": [
+          "18:00"
+        ],
+        "saving_yuan": 88021.7896221783
+      },
+      {
+        "context": [
+          "6:00",
+          "18:00"
+        ],
+        "saving_yuan": 123871.20222031511
+      }
+    ],
+    "18:00": [
+      {
+        "context": [],
+        "saving_yuan": 408943.6448277086
+      },
+      {
+        "context": [
+          "6:00"
+        ],
+        "saving_yuan": 337909.5947910957
+      },
+      {
+        "context": [
+          "12:00"
+        ],
+        "saving_yuan": 224290.33934336714
+      },
+      {
+        "context": [
+          "6:00",
+          "12:00"
+        ],
+        "saving_yuan": 225843.44225655496
+      }
+    ]
+  },
+  "shapley_savings_vs_0_only_for_full_policy_yuan": {
+    "6:00": 130907.90139137735,
+    "12:00": 186175.2898384506,
+    "18:00": 305295.68471716496
+  },
+  "full_policy_saving_vs_0_only_yuan": 622378.875946993
+}

@@ -12,3 +12,21 @@ outputs/q3_multistage/*.xlsx.inspect.ndjson
 outputs/q4/*.xlsx.inspect.ndjson
 # 阶段B退款口径敏感性检查点：可由 scripts/q3_strategy_decision.py 重算
 outputs/q3/checkpoints_sensitivity/
+
+# 第三问「预报发布时刻组合」对照的中间产物：主策略（0123）的 detail/payload 仍入库，
+# 另外 7 组可由 scripts/export_q3_multistage.py 30 <stages> 重算，不入库——
+# 答案所需的全部数字都在 summary_stages*_K30.json 与 q3_stage_comparison.{json,csv} 里。
+outputs/q3_multistage/detail_stages0_K30.npz
+outputs/q3_multistage/detail_stages01_K30.npz
+outputs/q3_multistage/detail_stages02_K30.npz
+outputs/q3_multistage/detail_stages03_K30.npz
+outputs/q3_multistage/detail_stages012_K30.npz
+outputs/q3_multistage/detail_stages013_K30.npz
+outputs/q3_multistage/detail_stages023_K30.npz
+outputs/q3_multistage/payload_stages0_K30.json
+outputs/q3_multistage/payload_stages01_K30.json
+outputs/q3_multistage/payload_stages02_K30.json
+outputs/q3_multistage/payload_stages03_K30.json
+outputs/q3_multistage/payload_stages012_K30.json
+outputs/q3_multistage/payload_stages013_K30.json
+outputs/q3_multistage/payload_stages023_K30.json

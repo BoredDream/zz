@@ -131,17 +131,21 @@ def load_hat(d, m):
 # ----------------------------------------------------------------------
 # 2. 阶段 LP（多阶段随机规划的滚动实现）
 # ----------------------------------------------------------------------
-def stage_lp(m, x_ref, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM):
+def stage_lp(m, x_ref, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM, commit_end=None):
     """求解第 m 阶段的两阶段随机 LP。
 
     决策结构（非预期性）：
-      * 本阶段"锁定"的合约量 —— m=0 时为全天计划 x[0..143]，m>=1 时为 a[t_m..t_next)
+      * 本阶段"锁定"的合约量 —— m=0 时为全天计划 x[0..143]，m>=1 时为
+        a[t_m..t_next_enabled)，即一直负责到下一次实际启用的发布时刻
       * 之后仍可调整的时段作为 recourse 变量 q^k（逐场景），体现"未来还能再调"的期权价值
       * 储能 c,g、紧急购电 z、弃电 w、SOC S 均为逐场景 recourse
 
-    返回：m=0 时返回全天计划 x；m>=1 时返回 [t_m,t_next) 的调整量。
+    返回：m=0 时返回全天计划 x；m>=1 时返回 [t_m,t_next_enabled) 的调整量。
     """
-    tm, tn = TSTAGE[m], TSTAGE[m+1]
+    tm = TSTAGE[m]
+    tn = TSTAGE[m+1] if commit_end is None else int(commit_end)
+    if not (tm < tn <= T):
+        raise ValueError(f"无效承诺区间：stage={m}, [{tm},{tn})")
     K = len(scenL)
     nT = T - tm                              # 剩余时段数
     stage0 = (m == 0)
@@ -231,13 +235,16 @@ def stage_lp(m, x_ref, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM):
     return r.x[:nD]
 
 
-def stage0_lp_145(committed_q, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM):
+def stage0_lp_145(committed_q, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM, commit_end=None):
     """0:00 的 145 段随机 LP。
 
     h=0 是前一日已锁定的 00:00--00:10 合约量；h=1..144 对应今天
     新发布的模板行 t=0..143。首段参与物理/SOC递推但不是当天的新决策。
     """
-    K, H, tn = len(scenL), T + 1, TSTAGE[1]
+    K, H = len(scenL), T + 1
+    tn = TSTAGE[1] if commit_end is None else int(commit_end)
+    if not (0 < tn <= T):
+        raise ValueError(f"无效阶段0承诺终点：{tn}")
     if any(len(v) != H for v in (*scenL, *scenG)):
         raise ValueError("阶段0情景必须为145段")
     R = list(range(tn, T))
@@ -400,18 +407,24 @@ def scenarios0_145(d, K=30):
 
 def solve_day(d, S0, committed_q, K=30, stages=(0, 1, 2, 3), cache=None):
     """stages 指定启用哪些调整时刻，(0,) 即退化为问题 2 的"只在 0:00 决策"。"""
+    enabled = tuple(sorted(set(int(m) for m in stages)))
+    if not enabled or enabled[0] != 0 or any(m not in (0, 1, 2, 3) for m in enabled):
+        raise ValueError("stages必须包含0，且只能取0/1/2/3")
+    first_adjust = TSTAGE[enabled[1]] if len(enabled) > 1 else T
     out = {k: np.zeros(T) for k in ('z', 'c', 'g', 'w', 'S')}
     sl, sg = scenarios0_145(d, K)
-    x = stage0_lp_145(committed_q, S0, sl, sg) # 0:00 计划，含已锁定午夜段
+    x = stage0_lp_145(committed_q, S0, sl, sg, commit_end=first_adjust)
     q = x.copy()                               # 最终合约量
     ml, mg = midnight_actual(d)
     S, midnight = dispatch_locked_interval(committed_q, S0, ml, mg)
     S_after_midnight = S
     for m in range(4):
         tm, tn = TSTAGE[m], TSTAGE[m+1]
-        if m >= 1 and m in stages:
+        if m >= 1 and m in enabled:
+            later = [j for j in enabled if j > m]
+            commit_end = TSTAGE[later[0]] if later else T
             sl, sg = scenarios(d, m, K)
-            q[tm:tn] = stage_lp(m, x, S, sl, sg)
+            q[tm:commit_end] = stage_lp(m, x, S, sl, sg, commit_end=commit_end)
         # t=143 是次日00:00--00:10，必须留给次日0:00决策之后执行。
         S = dispatch(tm, min(tn, T-1), q, S, L[d], G[d], out)
     natural = {k: np.r_[midnight[k], out[k][:T-1]] for k in ('c','g','z','w')}

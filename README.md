@@ -18,6 +18,7 @@
 - `docs/q3_multistage_model.md`：**第三问正式模型**的定义——模板行时间网格、母线侧储能口径、题面费用函数、四阶段非预期性结构、阶段LP、预测与场景生成、实时层、报表口径。
 - `src/q3_multistage.py`：第三问正式模型的多阶段随机规划求解器（滚动两阶段SAA + 贪心实时层）。
 - `scripts/export_q3_multistage.py`：第三问全年回测与产物落盘（payload / npz / summary）。
+- `scripts/assemble_q3_stage_comparison.py`：汇总八种预报发布组合，输出条件边际与 Shapley 分摊。
 - `scripts/build_result3_multistage.mjs`：用官方附件5模板生成第三问 `result3.xlsx`。
 - `scripts/validate_q3_multistage.py`：第三问独立验收（物理约束、费用口径恒等、工作簿逐格对账）。
 - `outputs/q3_multistage/`：第三问正式工作簿与结果。
@@ -101,7 +102,15 @@ $env:PYTHONPATH="src"
 .\.venv\Scripts\python.exe -X utf8 scripts\export_q3_multistage.py 30 0,1,2,3   # 全年回测，约 374 s
 node scripts\build_result3_multistage.mjs 0123 30                              # 生成 result3.xlsx
 .\.venv\Scripts\python.exe -X utf8 scripts\validate_q3_multistage.py 0123 30   # 独立验收
+
+# 预报发布时刻组合对照（题面第二小问）：八种组合各跑一次，再汇总
+.\.venv\Scripts\python.exe -X utf8 scripts\export_q3_multistage.py 30 0        # 以及 0,1 / 0,2 / 0,3 / …
+.\.venv\Scripts\python.exe -X utf8 scripts\assemble_q3_stage_comparison.py     # -> q3_stage_comparison.{json,csv}
+.\.venv\Scripts\python.exe -X utf8 scripts\report_q3_multistage.py             # 重生成 q3_report.md
 ```
+
+组合对照的锁定口径：某发布时刻被禁用时，上一次启用的发布时刻负责到**下一次实际启用
+的时刻**为止（见 `docs/q3_multistage_model.md` 第 1.1 节），不能沿用固定 6 小时块。
 
 模型定义见 `docs/q3_multistage_model.md`，输出位于 `outputs/q3_multistage/`。
 计划/调整表保留模板行（`t=0`覆盖0:10–0:20，`t=143`覆盖次日0:00–0:10）；
