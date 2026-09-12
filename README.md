@@ -5,6 +5,10 @@
 ## 目录
 
 - `problem/`：题面、附件和官方结果模板。
+- `src/q1_solver.py`：第一问单日确定性线性规划（周期条件 `S_0 = S_144`、弃电变量、起点自由敏感性与区间终点反事实口径）。
+- `scripts/build_result1.mjs`、`scripts/validate_q1.py`：第一问工作簿生成与独立验收（另一套消元编码 + 内点法重解）。
+- `reports/q1_report.md`：第一问计算报告（含与独立对照标准的逐项复核）。
+- `outputs/q1/`：第一问工作簿、结果与逐时段明细。
 - `docs/q2_model.md`：第二问模型定义、信息边界和求解流程。
 - `docs/q2_derivation.md`：分位数反例、直接情景模型与因果补救推导。
 - `src/q2_solver.py`：预测、优化、逐日回测和审计输出。
@@ -30,7 +34,15 @@
 
 ## 运行
 
-在 PowerShell 中执行：
+第一问（单日确定性优化）单独运行：
+
+```powershell
+$env:PYTHONPATH="src"; .\.venv\Scripts\python.exe -X utf8 src\q1_solver.py --data-dir problem/data --output-dir outputs/q1 --report reports/q1_report.md
+node scripts/build_result1.mjs
+$env:PYTHONPATH="src"; .\.venv\Scripts\python.exe -X utf8 scripts\validate_q1.py
+```
+
+第二问在 PowerShell 中执行：
 
 ```powershell
 .\scripts\run_q2.ps1 -Install
