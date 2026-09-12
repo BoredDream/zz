@@ -655,33 +655,59 @@ def fig3_5b(d) -> None:
 
 
 def fig3_6(d) -> None:
-    rows = sorted(d["stage"], key=lambda r: f(r["total_cost_yuan"]))
-    lbl = [r["policy"] for r in rows]
-    val = np.array([f(r["total_cost_yuan"]) for r in rows])
-    yy = np.arange(len(rows))[::-1]
-    base = val.max()
-    best = val.min()
+    """图 3-6 不同预测发布时间组合的交付期总费用比较（横向条形）。
 
-    fig, ax = plt.subplots(figsize=(7.1, 3.9))
-    style(ax, grid_axis="x")
-    cols = []
-    for r in rows:
-        p = r["policy"]
-        cols.append(C_MAIN if p == "0+6+12+18" else (C_GREY if p == "0-only" else C_GREY_L))
-    edges = [C_MAIN if r["policy"] == "0+6+12+18" else
-             (C_GREY if r["policy"] == "0-only" else C_GREY_L) for r in rows]
-    ax.barh(yy, val - 1.30e7, left=1.30e7, height=0.62, color=cols, edgecolor=edges, lw=0.6,
-            zorder=Z_DATA)
+    核心结论：
+        ① 任一多次发布组合都优于「仅0时」基线；
+        ② 全启用（0+6+12+18时）总费用最低；
+        ③ 相对基线降低约 62.24 万元（4.51%）。
+
+    设计要点（单位与配色）：
+        * 单位体系统一为**万元**，轴标题「交付期总费用 / 万元」，柱标签只写数值；
+        * 不使用「万」「百万元」「1e7」等混用表达；
+        * 仅三种颜色：最优方案=主色、基线方案=次强调深灰、其余=浅灰蓝；
+        * 基线不再用竖虚线 + 大段文字重复表达，只靠条形颜色弱强调。
+    注：为突出方案差异，横轴未从 0 开始（自 1300 万元起），范围约 1316–1379 万元。
+    """
+    CN = {"0-only": "仅0时", "0+6": "0+6时", "0+12": "0+12时", "0+18": "0+18时",
+          "0+6+12": "0+6+12时", "0+6+18": "0+6+18时", "0+12+18": "0+12+18时",
+          "0+6+12+18": "0+6+12+18时"}
+    rows = sorted(d["stage"], key=lambda r: f(r["total_cost_yuan"]))
+    lbl = [CN.get(r["policy"], r["policy"]) for r in rows]
+    val = np.array([f(r["total_cost_yuan"]) for r in rows]) / 1e4          # 万元
+    yy = np.arange(len(rows))[::-1]
+
+    best_i = int(np.argmin(val))
+    base_i = int(np.argmax(val))
+    drop = val[base_i] - val[best_i]
+    drop_pct = drop / val[base_i] * 100
+
+    X0 = 1300.0                                   # 横轴起点（非 0，见图注说明）
+    X1 = 1391.0
+
+    fig, ax = plt.subplots(figsize=(7.1, 3.6))
+    style(ax, grid_axis="x")                      # 仅竖向浅网格（要求 7）
+    cols = [C_GREY_L] * len(rows)
+    cols[best_i] = C_MAIN                         # 最优：主色
+    cols[base_i] = C_GREY                         # 基线：次强调深灰
+    ax.barh(yy, val - X0, left=X0, height=0.60, color=cols, lw=0, zorder=Z_DATA)
+
+    # 柱标签：只写数值（要求 1），统一置于条内右端 —— 既不压条外空间也不产生右侧留白
     for y, v in zip(yy, val):
-        ax.text(v + 1.6e3, y, f"{v / 1e4:.2f} 万", va="center", ha="left",
-                fontsize=FS_NOTE, color=C_TEXT)
-    ax.axvline(base, color=C_GREY, lw=1.0, ls="--", zorder=Z_BASE)
-    note(ax, base - 2.0e3, len(rows) - 1.2, "仅 0:00 发布（基线）", ha="right", va="top")
-    note(ax, 1.3055e7, 0.15, f"全启用省 {base - best:,.0f} 元（{(base - best) / base * 100:.4f}%）")
-    ax.set_yticks(yy); ax.set_yticklabels(lbl)
-    ax.set_xlim(1.3e7, val.max() * 1.028)
-    ax.set_xlabel("交付期总费用 / 元（横轴自 13.0 百万元起）", fontsize=FS_LABEL, color=C_TEXT)
-    ax.set_ylabel("预报发布组合", fontsize=FS_LABEL, color=C_TEXT)
+        ax.text(v - 1.6, y, f"{v:.2f}", ha="right", va="center",
+                fontsize=FS_NOTE, color="white", zorder=Z_NOTE)
+
+    # 核心结论：一条简洁无框标注，置于图内右上空白（最短条的右侧上方，不压任何条形/标签）
+    ax.text(X1 - 3.0, yy[best_i] - 0.26, f"较基线降低 {drop:.2f} 万元（{drop_pct:.2f}%）",
+            ha="right", va="bottom", fontsize=FS_NOTE, color=C_TEXT, zorder=Z_NOTE)
+
+    ax.set_yticks(yy)
+    ax.set_yticklabels(lbl)
+    ax.set_xlim(X0, X1)
+    ax.set_xticks([1310, 1330, 1350, 1370, 1390])
+    ax.set_xlabel("交付期总费用 / 万元", fontsize=FS_LABEL, color=C_TEXT)   # 要求 1
+    ax.set_ylabel("预报发布时刻组合", fontsize=FS_LABEL, color=C_TEXT)
+    ax.margins(y=0.045)
     save(fig, "fig3_6_stage_value")
 
 
