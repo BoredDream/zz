@@ -21,6 +21,7 @@ import q4_q2_solver as Q2M  # noqa: E402
 
 OUT = ROOT / "outputs" / "q4"
 Q3_SUMMARY = ROOT / "outputs" / "q3_multistage" / "summary_stages0123_K30.json"
+CONTROLLED = ROOT / "outputs" / "paper_analysis" / "q4_controlled" / "comparison.json"
 REPORT = ROOT / "reports" / "q4_report.md"
 K = 30
 DATES = ["2025-03-20", "2025-06-21", "2025-09-23", "2025-12-21"]
@@ -506,6 +507,24 @@ def main() -> int:
         A(f"4-3 的紧急购电日期为 {n3} 天，高于4-2的 {n2} 天，但总量更低。"
           "该差异是Q2型与Q3型完整策略的对照，不能单独归因于日内滚动调整。")
     A("")
+
+    if CONTROLLED.exists():
+        ctl = json.loads(CONTROLLED.read_text(encoding="utf-8"))
+        ca, cb = ctl["baseline"], ctl["rolling"]
+        A("### 2.1 同预测器严格控制变量对照（主归因证据）")
+        A("")
+        A("两组均在 `q4_solver` 内使用完全相同的负荷、光伏、价格预测器与场景生成器，"
+          "只将 `stages=(0,)` 改为 `stages=(0,1,2,3)`；因此该组才是滚动信息更新与调整权联合价值的严格对照。")
+        A("")
+        A("|指标|仅0:00决策|0+6+12+18滚动|")
+        A("|---|---:|---:|")
+        A(f"|总费用/元|{f(ca['total_cost_yuan'])}|{f(cb['total_cost_yuan'])}|")
+        A(f"|紧急购电量/kWh|{f(ca['emergency_kwh'])}|{f(cb['emergency_kwh'])}|")
+        A(f"|弃光量/kWh|{f(ca['curtail_kwh'])}|{f(cb['curtail_kwh'])}|")
+        A("")
+        A(f"滚动组节省 {f(ca['total_cost_yuan']-cb['total_cost_yuan'])} 元（{ctl['cost_saving_pct']:.3f}%）。"
+          "正文讨论滚动调整价值时应引用本对照；上表旧4-2/4-3的8.91%只能作为两套完整策略的结果差。")
+        A("")
 
     if Q3_SUMMARY.exists():
         q3 = json.loads(Q3_SUMMARY.read_text(encoding="utf-8"))["totals"]

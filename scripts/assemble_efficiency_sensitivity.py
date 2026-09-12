@@ -75,7 +75,7 @@ def main() -> None:
     )
     conclusions["continuous_scan_required"] = not conclusions["main_conclusions_unchanged"]
 
-    package = {"comparison_basis": {
+    package = {"primary_scenario": "oneway90", "sensitivity_scenario": "roundtrip90", "comparison_basis": {
         "roundtrip90": {"eta_charge": 0.90 ** 0.5, "eta_discharge": 0.90 ** 0.5, "roundtrip": 0.90},
         "oneway90": {"eta_charge": 0.90, "eta_discharge": 0.90, "roundtrip": 0.81},
         "only_efficiency_interpretation_changed": True,
@@ -88,14 +88,14 @@ def main() -> None:
     names = {"q1": "Q1", "q2": "Q2", "q3": "Q3", "q4-2": "Q4-2", "q4-3": "Q4-3"}
     lines = ["# Q1--Q4 储能效率口径敏感性", "",
              "SOC 统一使用 `S[t+1] = S[t] + eta_charge*C[t] - D[t]/eta_discharge`。",
-             "主情景为往返 90%（两端均为 sqrt(0.9)）；对照情景为两端各 90%（往返 81%）。", "",
+             "论文主口径为两端各 90%（往返 81%）；另以往返 90%（两端均为 sqrt(0.9)）作敏感性对照。", "",
              "## 核心结果", "",
              "| 问题 | 总费用变化 | 总购电量变化 | 充电量变化 | 放电量变化 |", "|---|---:|---:|---:|---:|"]
     for q in QUESTIONS:
         d = comparisons[q]["delta_percent"]
         lines.append(f"| {names[q]} | {d['total_purchase_cost_yuan']:.3f}% | {d['total_purchase_kwh']:.3f}% | "
                      f"{d['charge_kwh']:.3f}% | {d['discharge_kwh']:.3f}% |")
-    lines += ["", "注：变化率 = 往返 90% 情景相对于往返 81% 对照情景的变化。", "",
+    lines += ["", "注：变化率 = 往返 90% 敏感性情景相对于往返 81% 论文主口径的变化。", "",
               "## 策略稳健性", "",
               f"- Q3 八种发布组合在两种口径下的费用最优者均为 `{rankings['roundtrip90'][0]['stages']}`。",
               "- Q4 中，日内滚动调整（4-3）在两种口径下均优于仅 0:00 决策（4-2）。",

@@ -1,0 +1,329 @@
+{
+  "method": "paired circular moving-block bootstrap",
+  "comparisons": [
+    {
+      "name": "Q3: stages0 vs stages0123",
+      "definition": "baseline daily cost minus enhanced daily cost",
+      "days": 334,
+      "annual_saving_yuan": 622378.8759470098,
+      "saving_pct_of_baseline": 4.514879125805577,
+      "ci95_yuan": [
+        381459.4799649604,
+        904660.8433684682
+      ],
+      "bootstrap_positive_probability": 1.0,
+      "positive_days": 222,
+      "loss_days": 112,
+      "worst_day_yuan": -6882.780489516197,
+      "best_day_yuan": 40926.95279824245,
+      "block_days": 7,
+      "replicates": 10000,
+      "months": [
+        {
+          "month": "2025-02",
+          "saving_yuan": 14098.691776629563,
+          "positive_days": 15,
+          "days": 28,
+          "worst_day_yuan": -2177.718136471536,
+          "best_day_yuan": 5782.77289038345
+        },
+        {
+          "month": "2025-03",
+          "saving_yuan": 30749.821351874525,
+          "positive_days": 15,
+          "days": 31,
+          "worst_day_yuan": -1346.2973534680714,
+          "best_day_yuan": 10178.896210093975
+        },
+        {
+          "month": "2025-04",
+          "saving_yuan": 52854.09257973434,
+          "positive_days": 22,
+          "days": 30,
+          "worst_day_yuan": -1215.2735401430618,
+          "best_day_yuan": 13719.07488363055
+        },
+        {
+          "month": "2025-05",
+          "saving_yuan": -419.2363864849267,
+          "positive_days": 16,
+          "days": 31,
+          "worst_day_yuan": -6882.780489516197,
+          "best_day_yuan": 12451.066089016029
+        },
+        {
+          "month": "2025-06",
+          "saving_yuan": 143641.02790010194,
+          "positive_days": 25,
+          "days": 30,
+          "worst_day_yuan": -2914.875374484247,
+          "best_day_yuan": 40926.95279824245
+        },
+        {
+          "month": "2025-07",
+          "saving_yuan": 123618.91324062424,
+          "positive_days": 25,
+          "days": 31,
+          "worst_day_yuan": -4279.909196240813,
+          "best_day_yuan": 33008.69194896226
+        },
+        {
+          "month": "2025-08",
+          "saving_yuan": 46506.080033032355,
+          "positive_days": 22,
+          "days": 31,
+          "worst_day_yuan": -1798.0368444652631,
+          "best_day_yuan": 10553.893753085664
+        },
+        {
+          "month": "2025-09",
+          "saving_yuan": 102176.07716876602,
+          "positive_days": 21,
+          "days": 30,
+          "worst_day_yuan": -3012.5946639913745,
+          "best_day_yuan": 31674.507232824755
+        },
+        {
+          "month": "2025-10",
+          "saving_yuan": 3184.707317835455,
+          "positive_days": 18,
+          "days": 31,
+          "worst_day_yuan": -4735.463972908772,
+          "best_day_yuan": 3454.6236674293395
+        },
+        {
+          "month": "2025-11",
+          "saving_yuan": 12461.099287022716,
+          "positive_days": 20,
+          "days": 30,
+          "worst_day_yuan": -1720.3010004937241,
+          "best_day_yuan": 3808.917005059673
+        },
+        {
+          "month": "2025-12",
+          "saving_yuan": 93507.60167787352,
+          "positive_days": 23,
+          "days": 31,
+          "worst_day_yuan": -1136.2718106813118,
+          "best_day_yuan": 19412.294171482965
+        }
+      ]
+    },
+    {
+      "name": "Q3: stages023 vs stages013",
+      "definition": "baseline daily cost minus enhanced daily cost",
+      "days": 334,
+      "annual_saving_yuan": 1542.239276785469,
+      "saving_pct_of_baseline": 0.01160617171063138,
+      "ci95_yuan": [
+        -85269.61546511554,
+        113957.98657315
+      ],
+      "bootstrap_positive_probability": 0.4668,
+      "positive_days": 164,
+      "loss_days": 170,
+      "worst_day_yuan": -5419.979596134035,
+      "best_day_yuan": 13809.83202747161,
+      "block_days": 7,
+      "replicates": 10000,
+      "months": [
+        {
+          "month": "2025-02",
+          "saving_yuan": -9544.428961624966,
+          "positive_days": 9,
+          "days": 28,
+          "worst_day_yuan": -2146.600434211905,
+          "best_day_yuan": 981.0148552665814
+        },
+        {
+          "month": "2025-03",
+          "saving_yuan": -7459.500481443725,
+          "positive_days": 11,
+          "days": 31,
+          "worst_day_yuan": -1825.5401310718153,
+          "best_day_yuan": 2029.1887906029224
+        },
+        {
+          "month": "2025-04",
+          "saving_yuan": -4527.029448628276,
+          "positive_days": 12,
+          "days": 30,
+          "worst_day_yuan": -2121.763568580027,
+          "best_day_yuan": 2942.3341899825828
+        },
+        {
+          "month": "2025-05",
+          "saving_yuan": -10331.181868460648,
+          "positive_days": 13,
+          "days": 31,
+          "worst_day_yuan": -2838.492359269425,
+          "best_day_yuan": 1434.717658991125
+        },
+        {
+          "month": "2025-06",
+          "saving_yuan": 681.310873197639,
+          "positive_days": 19,
+          "days": 30,
+          "worst_day_yuan": -5419.979596134035,
+          "best_day_yuan": 6980.289695659259
+        },
+        {
+          "month": "2025-07",
+          "saving_yuan": 3609.091289407679,
+          "positive_days": 19,
+          "days": 31,
+          "worst_day_yuan": -4384.380376747773,
+          "best_day_yuan": 8590.302941285656
+        },
+        {
+          "month": "2025-08",
+          "saving_yuan": -13992.954258549387,
+          "positive_days": 6,
+          "days": 31,
+          "worst_day_yuan": -1923.9997327154779,
+          "best_day_yuan": 642.8255475606093
+        },
+        {
+          "month": "2025-09",
+          "saving_yuan": -4917.3648001078,
+          "positive_days": 15,
+          "days": 30,
+          "worst_day_yuan": -4166.231926605295,
+          "best_day_yuan": 4798.269024261514
+        },
+        {
+          "month": "2025-10",
+          "saving_yuan": -6754.040533596493,
+          "positive_days": 18,
+          "days": 31,
+          "worst_day_yuan": -3403.5725829856383,
+          "best_day_yuan": 1094.160610127874
+        },
+        {
+          "month": "2025-11",
+          "saving_yuan": -11388.333317598786,
+          "positive_days": 14,
+          "days": 30,
+          "worst_day_yuan": -2428.760702652391,
+          "best_day_yuan": 403.41211930764985
+        },
+        {
+          "month": "2025-12",
+          "saving_yuan": 66166.67078419024,
+          "positive_days": 28,
+          "days": 31,
+          "worst_day_yuan": -2018.63048527739,
+          "best_day_yuan": 13809.83202747161
+        }
+      ]
+    },
+    {
+      "name": "Q4 common predictor: stages0 vs stages0123",
+      "definition": "baseline daily cost minus enhanced daily cost",
+      "days": 334,
+      "annual_saving_yuan": 647557.3885613928,
+      "saving_pct_of_baseline": 4.467344938437373,
+      "ci95_yuan": [
+        383099.35467273096,
+        943529.9500522896
+      ],
+      "bootstrap_positive_probability": 1.0,
+      "positive_days": 222,
+      "loss_days": 112,
+      "worst_day_yuan": -6692.45757397647,
+      "best_day_yuan": 39836.13338658192,
+      "block_days": 7,
+      "replicates": 10000,
+      "months": [
+        {
+          "month": "2025-02",
+          "saving_yuan": 10347.145910466668,
+          "positive_days": 16,
+          "days": 28,
+          "worst_day_yuan": -2744.8689173099046,
+          "best_day_yuan": 4295.0951778113085
+        },
+        {
+          "month": "2025-03",
+          "saving_yuan": 23762.234677926317,
+          "positive_days": 14,
+          "days": 31,
+          "worst_day_yuan": -1913.3910327520643,
+          "best_day_yuan": 9013.629133817856
+        },
+        {
+          "month": "2025-04",
+          "saving_yuan": 46540.520524276595,
+          "positive_days": 23,
+          "days": 30,
+          "worst_day_yuan": -1554.4695110584871,
+          "best_day_yuan": 9969.988348196835
+        },
+        {
+          "month": "2025-05",
+          "saving_yuan": -1472.3568309597085,
+          "positive_days": 14,
+          "days": 31,
+          "worst_day_yuan": -6692.45757397647,
+          "best_day_yuan": 12925.560743543312
+        },
+        {
+          "month": "2025-06",
+          "saving_yuan": 146980.2698771675,
+          "positive_days": 27,
+          "days": 30,
+          "worst_day_yuan": -3826.9868616447784,
+          "best_day_yuan": 39836.13338658192
+        },
+        {
+          "month": "2025-07",
+          "saving_yuan": 143975.58778574588,
+          "positive_days": 26,
+          "days": 31,
+          "worst_day_yuan": -5806.03663424847,
+          "best_day_yuan": 37623.20829255288
+        },
+        {
+          "month": "2025-08",
+          "saving_yuan": 47819.12121815653,
+          "positive_days": 20,
+          "days": 31,
+          "worst_day_yuan": -1613.2348696408953,
+          "best_day_yuan": 12437.906970850243
+        },
+        {
+          "month": "2025-09",
+          "saving_yuan": 103548.610951918,
+          "positive_days": 20,
+          "days": 30,
+          "worst_day_yuan": -3176.2703354246114,
+          "best_day_yuan": 30746.995920405403
+        },
+        {
+          "month": "2025-10",
+          "saving_yuan": 747.9474647035531,
+          "positive_days": 17,
+          "days": 31,
+          "worst_day_yuan": -4751.010283395874,
+          "best_day_yuan": 3374.500604218927
+        },
+        {
+          "month": "2025-11",
+          "saving_yuan": 8613.35282694858,
+          "positive_days": 18,
+          "days": 30,
+          "worst_day_yuan": -2078.0764178943427,
+          "best_day_yuan": 2557.378191586984
+        },
+        {
+          "month": "2025-12",
+          "saving_yuan": 116694.95415504281,
+          "positive_days": 27,
+          "days": 31,
+          "worst_day_yuan": -2650.1441946138657,
+          "best_day_yuan": 22477.803597085483
+        }
+      ]
+    }
+  ]
+}

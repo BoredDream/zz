@@ -1,0 +1,63 @@
+{
+  "design": {
+    "predictor": "q4_solver shared load, PV and price predictor",
+    "K": 30,
+    "baseline_stages": [
+      0
+    ],
+    "rolling_stages": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "controlled_variables": [
+      "data",
+      "predictor",
+      "scenario generator",
+      "K",
+      "efficiency",
+      "settlement",
+      "initial SOC"
+    ]
+  },
+  "baseline": {
+    "total_cost_yuan": 14495352.32862276,
+    "plan_cost_yuan": 13575273.693798428,
+    "adjust_cost_yuan": 0.0,
+    "emergency_cost_yuan": 920078.6348243309,
+    "planned_purchase_kwh": 20716579.279239707,
+    "emergency_kwh": 145699.45620472872,
+    "charge_kwh": 6338148.088613298,
+    "discharge_kwh": 5133583.382394918,
+    "curtail_kwh": 1718760.2375927258,
+    "soc_end_mean_kwh": 7381.509427939176,
+    "soc_end_min_kwh": 1200.0,
+    "soc_end_max_kwh": 10800.0,
+    "delivery_days": 334
+  },
+  "rolling": {
+    "total_cost_yuan": 13847794.940061368,
+    "plan_cost_yuan": 12740081.271038936,
+    "adjust_cost_yuan": 878485.2356566923,
+    "emergency_cost_yuan": 229228.43336573849,
+    "planned_purchase_kwh": 20428725.30675369,
+    "emergency_kwh": 41691.45237982135,
+    "charge_kwh": 6647718.729329923,
+    "discharge_kwh": 5383199.375670892,
+    "curtail_kwh": 1266943.613841151,
+    "soc_end_mean_kwh": 7457.975264412206,
+    "soc_end_min_kwh": 1200.0,
+    "soc_end_max_kwh": 10800.0,
+    "delivery_days": 334
+  },
+  "difference_baseline_minus_rolling": {
+    "total_cost_yuan": 647557.3885613922,
+    "planned_purchase_kwh": 287853.9724860154,
+    "emergency_kwh": 104008.00382490737,
+    "charge_kwh": -309570.6407166254,
+    "discharge_kwh": -249615.99327597395,
+    "curtail_kwh": 451816.6237515749
+  },
+  "cost_saving_pct": 4.467344938437369
+}

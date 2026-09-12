@@ -1,4 +1,6 @@
 {
+  "primary_scenario": "oneway90",
+  "sensitivity_scenario": "roundtrip90",
   "comparison_basis": {
     "roundtrip90": {
       "eta_charge": 0.9486832980505138,

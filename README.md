@@ -63,15 +63,31 @@
 
 ```powershell
 $env:PYTHONPATH="src"
-.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q1 roundtrip90
-.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q2 roundtrip90
-.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q3 roundtrip90 --K 30
-.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-2 roundtrip90
-.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-3 roundtrip90 --K 30
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q1 oneway90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q2 oneway90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q3 oneway90 --K 30
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-2 oneway90
+.\.venv\Scripts\python.exe -X utf8 scripts\efficiency_sensitivity.py q4-3 oneway90 --K 30
 ```
 
-`roundtrip90` 取 `eta_charge=eta_discharge=sqrt(0.90)`；`oneway90` 取两端各 0.90。
+论文主口径 `oneway90` 取两端各 0.90（往返 0.81）；敏感性对照 `roundtrip90` 取
+`eta_charge=eta_discharge=sqrt(0.90)`（往返 0.90）。
 汇总结果见 `outputs/efficiency_sensitivity/`。
+
+论文补强分析（主口径均为往返效率 81%）：
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\run_saa_experiment.py q4 30 0
+.\.venv\Scripts\python.exe -X utf8 scripts\run_saa_experiment.py q4 30 0,1,2,3
+.\.venv\Scripts\python.exe -X utf8 scripts\analyze_scenario_calibration.py
+.\.venv\Scripts\python.exe -X utf8 scripts\bootstrap_monthly_analysis.py
+.\.venv\Scripts\python.exe -X utf8 scripts\assemble_k_convergence.py
+.\.venv\Scripts\python.exe -X utf8 scripts\render_paper_evidence.py
+.\.venv\Scripts\python.exe -X utf8 scripts\validate_paper_analysis.py
+```
+
+Q4严格控制变量对照必须使用同一个 `q4_solver`，仅切换 `stages=(0,)` 与
+`stages=(0,1,2,3)`；旧Q4-2/Q4-3对照含预测器差异，不能用于纯粹归因滚动调整。
 
 第一问（单日确定性优化）单独运行：
 

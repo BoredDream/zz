@@ -180,7 +180,7 @@ def scenarios4_145(d, K=30):
 # 3. 阶段 LP（价格随机版）
 # ----------------------------------------------------------------------
 def stage_lp4(m, x_ref, S_cur, scenL, scenG, scenP, pdet,
-              adjust=True, alpha=ALPHA, lam=0.478):
+              adjust=True, alpha=ALPHA, lam=0.478, commit_end=None):
     """第 m 阶段两阶段随机 LP。
 
     adjust=False 时（问题 4-2）不设 recourse 购电变量，即 q≡x，
@@ -192,7 +192,9 @@ def stage_lp4(m, x_ref, S_cur, scenL, scenG, scenP, pdet,
         每场景 k：Q(nR) U(nR) c(nT) g(nT) z(nT) w(nT) S(nT)
     """
     tm = TSTAGE[m]
-    tn = TSTAGE[m+1] if adjust else T          # 不可调整时后续无 recourse
+    tn = (TSTAGE[m+1] if commit_end is None else int(commit_end)) if adjust else T
+    if not (tm < tn <= T):
+        raise ValueError(f"无效承诺区间: stage={m}, [{tm},{tn})")
     K = len(scenL)
     nT = T - tm
     stage0 = (m == 0)
@@ -275,9 +277,12 @@ def stage_lp4(m, x_ref, S_cur, scenL, scenG, scenP, pdet,
     return r.x[:nD]
 
 
-def stage0_lp4_145(committed_q, S_cur, scenL, scenG, scenP, pdet, lam):
+def stage0_lp4_145(committed_q, S_cur, scenL, scenG, scenP, pdet, lam,
+                   commit_end=TSTAGE[1]):
     """波动电价下0:00的145段LP；h=0为前日已锁定午夜段。"""
-    K, H, tn = len(scenL), T+1, TSTAGE[1]
+    K, H, tn = len(scenL), T+1, int(commit_end)
+    if not (0 < tn <= T):
+        raise ValueError(f"无效0:00承诺区间终点: {tn}")
     R, nD = list(range(tn, T)), T
     nR = len(R); per = 2*nR + 5*H; nv = nD + K*per
     def o(k): return nD + k*per
@@ -324,21 +329,27 @@ def stage0_lp4_145(committed_q, S_cur, scenL, scenG, scenP, pdet, lam):
 # 4. 单日主流程与结算
 # ----------------------------------------------------------------------
 def solve_day4(d, S0, committed_q, K=30, stages=(0, 1, 2, 3)):
-    adjust = len(stages) > 1
+    enabled = tuple(sorted(set(int(m) for m in stages)))
+    if not enabled or enabled[0] != 0 or any(m not in (0, 1, 2, 3) for m in enabled):
+        raise ValueError("stages必须包含0，且只能取0/1/2/3")
+    first_adjust = TSTAGE[enabled[1]] if len(enabled) > 1 else T
     out = {k: np.zeros(T) for k in ('z', 'c', 'g', 'w', 'S')}
     sl, sg, spz = scenarios4_145(d, K)
     ph = price_hat(d, 0); lam = LAM  # 与Q3统一，避免横向比较混入终端价值变化
-    x = stage0_lp4_145(committed_q, S0, sl, sg, spz, ph, lam)
+    x = stage0_lp4_145(committed_q, S0, sl, sg, spz, ph, lam, commit_end=first_adjust)
     q = x.copy(); S = S0
     ml, mg = midnight_actual4(d)
     S, midnight = dispatch_locked_interval(committed_q, S, ml, mg)
     S_after_midnight = S
     for m in range(4):
         tm, tn = TSTAGE[m], TSTAGE[m+1]
-        if m >= 1 and m in stages:
+        if m >= 1 and m in enabled:
+            later = [j for j in enabled if j > m]
+            commit_end = TSTAGE[later[0]] if later else T
             sl, sg, spz = scenarios4(d, m, K)
             ph = price_hat(d, m); lam = LAM
-            q[tm:tn] = stage_lp4(m, x, S, sl, sg, spz, ph, adjust=True, lam=lam)
+            q[tm:commit_end] = stage_lp4(m, x, S, sl, sg, spz, ph, adjust=True,
+                                         lam=lam, commit_end=commit_end)
         S = dispatch(tm, min(tn, T-1), q, S, L[d], G[d], out)
     natural = {k: np.r_[midnight[k], out[k][:T-1]] for k in ('c','g','z','w')}
     natural['S'] = np.r_[S0, S_after_midnight, out['S'][:T-1]]

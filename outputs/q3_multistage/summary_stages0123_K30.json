@@ -2,7 +2,7 @@
   "meta": {
     "model": "multistage_rolling_SAA_scenario_branched_recourse",
     "storage_convention": "bus_side_charge_and_discharge",
-    "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
+    "soc_recursion": "S[t] = S[t-1] + eta_charge*c[t] - g[t]/eta_discharge",
     "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
     "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
     "stage0_horizon_intervals": 145,
@@ -14,8 +14,11 @@
       3
     ],
     "tag": "0123",
-    "elapsed_seconds": 369.1187268999929,
+    "elapsed_seconds": 493.020008099993,
     "eta": 0.9,
+    "eta_charge": 0.9,
+    "eta_discharge": 0.9,
+    "roundtrip_efficiency": 0.81,
     "interval_limit_kwh": 833.3333333333333,
     "delivery_period": {
       "start": "2025-02-01",

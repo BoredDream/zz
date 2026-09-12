@@ -3,7 +3,7 @@
     "model": "q4_fluctuating_price_two_stage_saa",
     "variant": "3",
     "storage_convention": "bus_side_charge_and_discharge",
-    "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
+    "soc_recursion": "S[t] = S[t-1] + eta_charge*c[t] - g[t]/eta_discharge",
     "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
     "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
     "settlement_price": "actual_price_附件4",
@@ -14,8 +14,11 @@
       2,
       3
     ],
-    "elapsed_seconds": 388.6564722000039,
+    "elapsed_seconds": 525.4450856000185,
     "eta": 0.9,
+    "eta_charge": 0.9,
+    "eta_discharge": 0.9,
+    "roundtrip_efficiency": 0.81,
     "interval_limit_kwh": 833.3333333333333,
     "delivery_period": {
       "start": "2025-02-01T00:00",
