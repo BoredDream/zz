@@ -5,3 +5,7 @@ __pycache__/
 *.pyc
 .template_preview/
 
+# 第三问可再生产物：体积大且可由 src/q3_solver.py 重算，不入库
+outputs/q3/checkpoints/
+outputs/q3/result3.xlsx.inspect.ndjson
+
