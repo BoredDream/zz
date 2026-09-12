@@ -227,67 +227,100 @@ def fig1() -> dict:
 
 
 # ==============================================================================
-#  图 1b  典型日功率曲线与分时电价
+#  图 1b  典型日负荷/光伏/净负荷与分时电价
+#  --------------------------------------------------------------------------
+#  先做过的数据审计（结论：数值无误，发现并修正了一处时间标签生成缺陷）
+#    · annex1_net_load.csv 由 scripts/gen_plot_data.py 生成。
+#      附件1.xlsx 的时间列为【混合类型】：前 132 行为 datetime.time，
+#      后 12 行（22:10 ~ 0:00+1）为纯字符串。旧版生成函数用
+#      `"24:00" if not hasattr(v, "hour") else ...` 判断，使这 12 行标签全部写成 24:00，
+#      导致 slot_of() 对它们返回同一个 x=24，折线在 x=24 处往返，
+#      在 24:00 位置画出一根假的垂直下降线，并使末端曲线形态失真。
+#      -> 已在 gen_plot_data.py 中改为「显式类型判断 + 字符串解析」并加断言校验。
+#    · 数值（price / load / pv / net）全部直接取自 xlsx 原始行，未做任何改动。
+#    · 修正后逐时点核验：pv 峰值 7612.3 kW 出现在 12:10 前后；
+#      20:00 起 pv 归零；net<0 仅出现在 09:40–15:50；24:00 无垂直线。
+#
+#  绘图约定（数据为 10 分钟区间量，行标签为该区间的结束时刻 00:10…24:00）
+#    · x 轴直接取标签时刻，因此 x 覆盖 (0, 24]，不再用 np.r_ 外推端点，
+#      避免人为制造"末端垂线"或"平台"。
+#    · 三条功率曲线用 plot 而非 step：load/pv 是平滑变化的连续量，
+#      阶梯化会在整点造成虚假的平台印象。
 # ==============================================================================
 def fig1b() -> dict:
     rows = rd(DATA / "annex1_net_load.csv")
-    t = np.array([slot_of(r["time_label"]) for r in rows])
+    labels = [r["time_label"] for r in rows]
+    # 时间轴自检：144 个唯一标签、严格递增（防回归）
+    if len(set(labels)) != len(labels):
+        raise ValueError(f"时间标签存在重复：{len(set(labels))} 个唯一值 / {len(labels)} 行")
+    t = np.array([slot_of(s) for s in labels])
+    if not np.all(np.diff(t) > 0):
+        raise ValueError("时间轴非严格递增，请检查 gen_plot_data.py 的 label() 实现")
+
     load = np.array([float(r["load_kw"]) for r in rows])
     pv = np.array([float(r["pv_kw"]) for r in rows])
     net = np.array([float(r["net_kw"]) for r in rows])
     price = np.array([float(r["price_yuan_per_kwh"]) for r in rows])
-    step = np.r_[t, 24.0]
     sur = net < 0
 
     with matplotlib.rc_context(RC):
         fig, (ax1, ax2) = plt.subplots(
-            2, 1, figsize=(7.1, 4.6), sharex=True,
-            gridspec_kw={"height_ratios": [2.0, 1.0], "hspace": 0.14})
+            2, 1, figsize=(7.1, 4.4), sharex=True,
+            gridspec_kw={"height_ratios": [1.8, 0.8], "hspace": 0.12})
+
+        # ---------------- 上面板：负荷 / 光伏 / 净负荷 ----------------
+        # 只填充"净负荷低于 0 的实际区域"，表达真正的光伏富余量（不用整块矩形背景）
         if sur.any():
-            s0, s1 = t[sur][0], t[sur][-1] + 10 / 60
-            ax1.axvspan(s0, s1, color=C_SOC_L, alpha=0.45, zorder=0)
-            ax1.annotate(f"光伏富余 {abs(net[sur].sum()) * DT:,.0f} kWh",
-                         xy=((s0 + s1) / 2, -1800), ha="center", fontsize=8,
-                         color="#4E6B52", zorder=9)
-        ax1.plot(t, load, color=C_MAIN, lw=1.4, ls=LS_MAIN, marker=MK_MAIN,
-                 markevery=16, ms=3.0, mfc="white", mew=0.9, zorder=4, label="小区负载")
-        ax1.plot(t, pv, color=C_ACCENT, lw=1.6, ls=LS_ALT, marker=MK_ALT,
-                 markevery=16, ms=3.0, mfc="white", mew=0.9, zorder=5, label="光伏出力")
+            ax1.fill_between(t, net, 0.0, where=sur, interpolate=True,
+                             color=C_SOC, alpha=0.15, linewidth=0, zorder=2)
+        ax1.axhline(0.0, color=C_GREY_L, lw=0.7, alpha=0.9, zorder=1)
+        ax1.plot(t, load, color=C_MAIN, lw=1.6, ls="-", zorder=4, label="小区负荷")
+        ax1.plot(t, pv, color=C_GREY, lw=1.5, ls=(0, (5, 2)), zorder=3, label="光伏出力")
         ax1.plot(t, net, color=C_SOC, lw=1.8, ls=(0, (6, 1.5, 1.5, 1.5)),
-                 marker=MK_ALT2, markevery=16, ms=3.2, mfc="white", mew=0.9,
-                 zorder=6, label="净负荷（负载−光伏）")
-        ax1.axhline(0, color=C_GREY_L, lw=0.6, zorder=1)
-        imax = int(np.argmax(pv))
-        ax1.plot([t[imax]], [pv[imax]], marker="o", ms=4.6, mfc=C_ACCENT,
-                 mec="white", mew=1.1, zorder=9)
-        box(ax1, f"光伏峰值 {pv[imax]:,.0f} kW", (t[imax], pv[imax]), (10, 6), C_ACCENT)
+                 zorder=5, label="净负荷")
+        # 全图仅保留 1 处必要结论标注（无数值、无边框、无箭头）
+        if sur.any():
+            m = float(t[sur].mean())
+            ax1.annotate("光伏富余区", xy=(m, -900), ha="center", va="top",
+                         fontsize=8, color="#4E6B52", zorder=9)
         ax1.set_ylabel("功率 / kW")
-        ax1.set_ylim(-2400, 9200)
+        ax1.set_ylim(-2400, 8400)
         ax1.yaxis.set_major_locator(MaxNLocator(nbins=6))
         style(ax1)
-        ax1.legend(frameon=False, ncol=3, loc="upper left", handlelength=2.6,
-                   columnspacing=1.4, bbox_to_anchor=(0.0, 1.02), borderaxespad=0.0)
-        ax1.set_title("典型日（附件1）功率曲线与分时电价", pad=22)
+        ax1.legend(frameon=False, ncol=3, loc="upper center",
+                   bbox_to_anchor=(0.5, 1.02), handlelength=2.4, columnspacing=1.6,
+                   borderaxespad=0.0, fontsize=8)
 
-        ax2.step(step, np.r_[price, price[-1]], where="post", color=C_ACCENT, lw=1.5)
-        ax2.fill_between(step, 0, np.r_[price, price[-1]], step="post",
-                         color=C_ACCENT_L, alpha=0.35, linewidth=0)
-        ax2.axhspan(0, 0.45, color=C_MAIN, alpha=0.06, zorder=0)
-        ax2.axhspan(1.25, 1.62, color=C_ACCENT, alpha=0.08, zorder=0)
-        ax2.annotate(f"谷价区 <0.45\n最低 {price.min():.4f}", xy=(1.0, 0.18),
-                     fontsize=7.8, color=C_MAIN_D, zorder=9)
-        ax2.annotate(f"尖峰价区 >1.25\n最高 {price.max():.4f}", xy=(14.2, 1.26),
-                     fontsize=7.8, color=C_ACCENT, zorder=9)
-        ax2.set_ylim(0, 1.62)
+        # ---------------- 下面板：分时电价（仅阶梯线，无填充） ----------------
+        ax2.step(t, price, where="post", color=C_ACCENT, lw=1.5, zorder=4)
+        pmin, pmax = float(price.min()), float(price.max())
+        ax2.axhspan(pmin - 0.05, 0.56, color=C_MAIN, alpha=0.06, zorder=0, lw=0)
+        ax2.axhspan(1.25, pmax + 0.05, color=C_ACCENT, alpha=0.06, zorder=0, lw=0)
+        ax2.annotate("谷价区", xy=(1.2, 0.22), fontsize=7.5, color=C_MAIN_D, zorder=9)
+        ax2.annotate("尖峰价区", xy=(14.6, 1.31), fontsize=7.5, color=C_ACCENT, zorder=9)
+        ax2.set_ylim(0, pmax * 1.16)
         ax2.set_yticks([0, 0.5, 1.0, 1.5])
         ax2.set_xlim(0, 24)
-        ax2.set_xticks(range(0, 25, 2))
-        ax2.set_xlabel("时刻 / 时")
+        ax2.set_xticks(range(0, 25, 4))
+        ax2.set_xlabel("时刻 / h")
         ax2.set_ylabel("电价 / (元/kWh)")
         style(ax2)
-        fig.tight_layout()
+
+        fig.subplots_adjust(left=0.088, right=0.985, top=0.915, bottom=0.125)
         out = save(fig, "fig1b_typical_day")
-    return {"files": out, "meta": {"surplus_kwh": float(abs(net[sur].sum()) * DT)}}
+    return {"files": out, "meta": {
+        "pv_peak_kw": float(pv.max()),
+        "pv_peak_label": labels[int(np.argmax(pv))],
+        "pv_zero_intervals": int((pv == 0).sum()),
+        "surplus_intervals": int(sur.sum()),
+        "surplus_kwh": float(abs(net[sur].sum()) * DT),
+        "surplus_label_range": [labels[int(np.nonzero(sur)[0][0])],
+                                labels[int(np.nonzero(sur)[0][-1])]] if sur.any() else None,
+        "price_min": pmin, "price_max": pmax,
+        "price_peak_valley_ratio": float(pmax / pmin),
+        "pv_at_20h": float(pv[[i for i, s in enumerate(labels) if s == "20:00"][0]]),
+        "last_label": labels[-1], "n_labels": len(set(labels)),
+    }}
 
 
 # ==============================================================================

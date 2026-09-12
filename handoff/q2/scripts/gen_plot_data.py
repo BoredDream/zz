@@ -41,8 +41,29 @@ def main() -> int:
     ws = openpyxl.load_workbook(ATT / "附件1.xlsx", read_only=True, data_only=True).active
     a1 = list(ws.iter_rows(values_only=True))[1:]
 
-    def label(v):
-        return "24:00" if not hasattr(v, "hour") else f"{v.hour:02d}:{v.minute:02d}"
+    def label(v) -> str:
+        """把附件1 的时间标签统一规范为 'HH:MM'（末行为 '24:00'）。
+
+        ⚠ 重要：附件1.xlsx 的时间列是【混合类型】——
+          前 132 行为 datetime.time，后 12 行（22:10 ~ 0:00+1）为纯字符串。
+        早先的实现写成 `"24:00" if not hasattr(v, "hour") else ...`，
+        使所有字符串行都被误判为 24:00，导致最后 12 行标签全部相同；
+        绘图时 slot_of() 对它返回同一个 x，折线在 x=24 处往返，形成一根
+        假的垂直下降线，并让末端曲线形态完全失真。
+        这里按「显式类型判断 + 字符串解析」双路径规范化，不再依赖属性探测。
+        """
+        if hasattr(v, "hour"):                      # datetime.time
+            return f"{v.hour:02d}:{v.minute:02d}"
+        s = str(v).strip()
+        if s in ("0:00+1", "00:00+1"):              # 题面：表示次日 0:00 即当天 24:00
+            return "24:00"
+        parts = s.split(":")
+        if len(parts) >= 2:
+            try:
+                return f"{int(parts[0]):02d}:{int(parts[1]):02d}"
+            except ValueError:
+                pass
+        raise ValueError(f"无法解析附件1 的时间标签：{v!r}")
 
     with (OUT / "annex1_net_load.csv").open("w", newline="", encoding="utf-8-sig") as h:
         w = csv.writer(h)
@@ -52,7 +73,10 @@ def main() -> int:
             L, V = float(t[2]), float(t[3])
             w.writerow([label(t[0]), float(t[1]), L, V,
                         round(L - V, 6), round((L - V) * DT, 6)])
-    print(f"annex1_net_load.csv            : {len(a1)} 行")
+    labels = [label(t[0]) for t in a1]
+    assert len(set(labels)) == 144, f"时间标签仍有重复：{len(set(labels))} 个唯一值 / 144 行"
+    assert labels[0] == "00:10" and labels[-1] == "24:00", f"首末标签异常：{labels[0]} / {labels[-1]}"
+    print(f"annex1_net_load.csv            : {len(a1)} 行（144 个唯一时间标签，已校验）")
 
     # ---------- 2) 月度汇总 ----------
     mm = collections.defaultdict(lambda: [0.0] * 4)
