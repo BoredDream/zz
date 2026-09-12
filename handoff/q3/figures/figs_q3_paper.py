@@ -568,19 +568,60 @@ def fig3_4a(d) -> None:
 
 
 def fig3_4b(d) -> None:
-    soc = np.array(d["soc_hist"])
+    """图 3-4b 储电量的全期分布（诊断边界约束是否经常活跃）。
+
+    指标定义（与代码严格一致，术语不得含糊）：
+        * 运行下限 E_min = 1200 kWh，上限 E_max = 10800 kWh；
+        * **下限命中**：E_t <= E_min + 1e-6  （即 E_t == 1200，浮点容差 1e-6）；
+        * **上限命中**：E_t >= E_max - 1e-6  （即 E_t == 10800）；
+        * 分母 = 交付期全部时段数 334×144 = 48,096（自然日口径，不含起始点）。
+      因此图中一律用「命中率」，不使用「贴边/接近」这类无阈值定义的表述。
+
+    结论：上限命中率 9.84% 远高于下限命中率 1.18%，且最高 bin 落在 [10600, 10800)，
+    说明储能运行具有**明显的上边界聚集**，上限约束经常活跃。
+    """
+    soc = np.array(d["soc_hist"], dtype=float)
+    S_MIN, S_MAX = 1200.0, 10800.0
+    TOL = 1e-6
+    N = soc.size
+    n_lo = int((soc <= S_MIN + TOL).sum())
+    n_hi = int((soc >= S_MAX - TOL).sum())
+    lo_pct, hi_pct = n_lo / N * 100, n_hi / N * 100
+
+    # 参考线两端各留 5% 余量（x 轴略超上下限即可，避免左右大空白）
+    pad = (S_MAX - S_MIN) * 0.05
+    x_lo, x_hi = S_MIN - pad, S_MAX + pad
+    # 纵轴留出顶部空白放边界占比（最高 bin 占 87%，右上角不会压柱）
+    nbin, gapp = 48, 0.05
+    cnt, edges = np.histogram(soc, bins=nbin, range=(S_MIN, S_MAX))
+    ymax = cnt.max() * 1.24
+
     fig, ax = plt.subplots(figsize=(7.1, 3.6))
-    style(ax)
-    ax.hist(soc, bins=48, range=(1200, 10800), color=C_MAIN, edgecolor="white", lw=0.3,
-            zorder=Z_DATA)
-    ax.axvline(10800, color=C_STATE, lw=0.9, ls=":", zorder=Z_BASE)
-    ax.axvline(1200, color=C_STATE, lw=0.9, ls=":", zorder=Z_BASE)
-    hi = (soc >= 10800 - 1e-6).mean() * 100
-    lo = (soc <= 1200 + 1e-6).mean() * 100
-    note(ax, 10500, ax.get_ylim()[1] * 0.92, f"贴上限 {hi:.2f}%", ha="right", va="top")
-    note(ax, 1500, ax.get_ylim()[1] * 0.92, f"贴下限 {lo:.2f}%", ha="left", va="top")
+    style(ax)                                            # 去上/右边框 + 仅水平浅网格
+
+    w = (edges[1] - edges[0]) * (1 - gapp)
+    centers = (edges[:-1] + edges[1:]) / 2.0
+    cols = [C_MAIN if i in (0, nbin - 1) else C_GREYBLUE for i in range(nbin)]
+    ax.bar(centers, cnt, width=w, color=cols, lw=0, zorder=Z_DATA)
+
+    # 上下限参考线：统一样式的浅色细虚线，弱于直方图主体
+    for xv in (S_MIN, S_MAX):
+        ax.axvline(xv, color=C_STATE, lw=0.9, ls=(0, (1.2, 1.8)), alpha=0.55,
+                   zorder=Z_BASE)
+
+    ax.set_xlim(x_lo, x_hi)
+    ax.set_ylim(0, ymax)
+    ax.set_xticks([1200, 3000, 5000, 7000, 9000, 10800])
     ax.set_xlabel("储电量 / kWh", fontsize=FS_LABEL, color=C_TEXT)
     ax.set_ylabel("时段数", fontsize=FS_LABEL, color=C_TEXT)
+
+    # 边界占比：简洁无框文字，紧贴各自的参考线。
+    # 上限处最高柱达 8717，故上限标签放在该柱**之上**，避免压柱；下限处柱很矮，可放低。
+    ax.text(S_MIN + 60, cnt.max() * 0.55, f"下限命中率 {lo_pct:.2f}%",
+            ha="left", va="bottom", fontsize=FS_NOTE, color=C_STATE, zorder=Z_NOTE)
+    ax.text(S_MAX - 60, cnt[-1] * 1.03, f"上限命中率 {hi_pct:.2f}%",
+            ha="right", va="bottom", fontsize=FS_NOTE, color=C_STATE, zorder=Z_NOTE)
+
     save(fig, "fig3_4b_soc_distribution")
 
 

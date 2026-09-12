@@ -114,8 +114,8 @@ for lo, hi in ((0.0, 0.45), (0.45, 0.75), (0.75, 1.05), (1.05, 1.45)):
     e = zz_[m]
     n = int((e > 1e-9).sum())
     meanp = float(pr[m][e > 1e-9].mean()) if n else 0.0
-    rows.append([f"{lo:.2f}", f"{hi:.2f}", n, repr(float(float(e.sum()))),
-                 repr(float(float((5 * pr[m] * e).sum()))), f"{meanp:.4f}", repr(float(float(ww[m].sum())))])
+    rows.append([repr(float(lo)), repr(float(hi)), n, repr(float(float(e.sum()))),
+                 repr(float(float((5 * pr[m] * e).sum()))), repr(float(meanp)), repr(float(float(ww[m].sum())))])
 w("q3_emergency_by_price_band.csv",
   ["price_low", "price_high", "emergency_intervals", "emergency_kwh",
    "emergency_cost_yuan", "mean_price", "curtail_kwh"], rows)
@@ -148,7 +148,7 @@ for dt in TARGETS:
     i = dates.index(dt)
     for t in range(T):
         a, b = (t + 1) * 10, (t + 2) * 10
-        rows.append([dt, t, f"{a // 60}:{a % 60:02d}", f"{P[t]:.4f}",
+        rows.append([dt, t, f"{a // 60}:{a % 60:02d}", repr(float(P[t])),
                      repr(float(det['x'][i, t])), repr(float(det['q'][i, t])),
                      repr(float(det['natural_x'][i, t])), repr(float(det['natural_q'][i, t])),
                      repr(float(det['z'][i, t])), repr(float(det['c'][i, t])), repr(float(det['g'][i, t])),
@@ -160,7 +160,7 @@ w("q3_target_days_interval.csv",
 
 # ---------------- 6) SOC 触边与充放电分布（供直方图） ----------------
 soc_all = SS[:, 1:].ravel()
-rows = [[f"{v:.1f}"] for v in soc_all]
+rows = [[repr(float(v))] for v in soc_all]
 w("q3_soc_hist.csv", ["soc_end_kwh"], rows)
 rows = []
 for i in range(cc.shape[0]):
@@ -170,7 +170,7 @@ for i in range(cc.shape[0]):
         if gg[i, t] > 1e-9:
             rows.append(["discharge", repr(float(gg[i, t]))])
 w("q3_charge_discharge_hist.csv", ["kind", "kwh_per_interval"], rows)
-rows = [[dt, f"{s:.4f}"] for dt, s in zip([d["date"] for d in days], S0s)]
+rows = [[dt, repr(float(s))] for dt, s in zip([d["date"] for d in days], S0s)]
 w("q3_soc_start_delivery_series.csv", ["date", "soc_start_kwh"], rows)
 
 # ---------------- 7) 预报组合对照 ----------------
@@ -187,7 +187,7 @@ w("q3_stage_comparison.csv",
    "plan_cost_yuan", "adjust_cost_yuan", "emergency_cost_yuan", "emergency_kwh", "curtail_kwh"], rows)
 sh = cmpj["shapley_savings_vs_0_only_for_full_policy_yuan"]
 saving = cmpj["full_policy_saving_vs_0_only_yuan"]
-rows = [[k, repr(float(v)), f"{v / saving * 100:.4f}"] for k, v in sh.items()]
+rows = [[k, repr(float(v)), repr(float(v / saving * 100))] for k, v in sh.items()]
 w("q3_shapley.csv", ["issue", "shapley_saving_yuan", "share_pct"], rows)
 rows = []
 for issue, items in cmpj["conditional_marginal_savings"].items():
@@ -200,7 +200,7 @@ w("q3_conditional_marginal.csv", ["issue", "context", "saving_yuan"], rows)
 lam = json.loads((QM / "lambda_sensitivity_K30.json").read_text(encoding="utf-8"))
 rows = []
 for r in lam["scan"]:
-    rows.append([f"{r['lam']:.4f}", f"{r['lam_over_baseline']:.4f}", repr(float(r['total_cost_yuan'])),
+    rows.append([repr(float(r['lam'])), repr(float(r['lam_over_baseline'])), repr(float(r['total_cost_yuan'])),
                  repr(float(r['delta_vs_baseline_yuan'])), repr(float(r['delta_pct'])),
                  repr(float(r['emergency_kwh'])), repr(float(r['emergency_cost_yuan'])),
                  repr(float(r['curtail_kwh'])), repr(float(r['soc_start_delivery_kwh'])),
@@ -226,8 +226,8 @@ for nm, label in (("solver_sensitivity_highs-ds.json", "highs-ds（对偶单纯�
                   ("solver_sensitivity_highs-ipm.json", "highs-ipm（内点法）")):
     s = json.loads((QM / nm).read_text(encoding="utf-8"))
     rows.append([label, s["method"], repr(float(s['alt_total_cost_yuan'])), repr(float(s['total_gap_yuan'])),
-                 f"{s['total_gap_pct']:.9f}", repr(float(s['max_abs_daily_gap_yuan'])),
-                 s["worst_day"], s["days_with_gap_over_1yuan"], f"{s['elapsed_seconds']:.1f}"])
+                 repr(float(s['total_gap_pct'])), repr(float(s['max_abs_daily_gap_yuan'])),
+                 s["worst_day"], s["days_with_gap_over_1yuan"], repr(float(s['elapsed_seconds']))])
 rows.insert(0, ["highs（主答案）", "highs", repr(float(tot['total_cost_yuan'])), "0.000000", "0.000000000",
                 "0.000000", "—", 0, "369.1"])
 w("q3_solver_sensitivity.csv",
@@ -242,7 +242,7 @@ rows = [
     ["目标偏差 > 1e-6 的 LP 数", ov["n_lps_obj_gap_gt_1e-6"]],
     ["解向量不同的 (LP,算法) 对数", ov["n_lp_method_pairs_solution_differs"]],
     ["(LP,算法) 总对数", ov["n_lp_method_pairs"]],
-    ["解向量不同占比", f"{ov['n_lp_method_pairs_solution_differs'] / ov['n_lp_method_pairs'] * 100:.4f}"],
+    ["解向量不同占比", repr(float(ov['n_lp_method_pairs_solution_differs'] / ov['n_lp_method_pairs'] * 100))],
     ["数值抖动最大相对目标差", f"{ov['jitter_max_rel_obj_gap']:.6e}"],
     ["抖动下解改变数", f"{ov['jitter_n_solution_differs']} / {ov['jitter_n']}"],
 ]
@@ -254,18 +254,18 @@ q4t = q4["meta"]["totals"]["total_cost_yuan"]
 rows = [["第三问（确定性电价）", repr(float(tot['total_cost_yuan'])), "334", "—"],
         ["第四问 Q4-3（波动电价）", repr(float(q4t)), "334",
          repr(float((q4t - tot['total_cost_yuan'])))],
-        ["差额占比", f"{(q4t / tot['total_cost_yuan'] - 1) * 100:.4f}", "", ""]]
+        ["差额占比", repr(float((q4t / tot['total_cost_yuan'] - 1) * 100)), "", ""]]
 w("q3_vs_q4.csv", ["item", "value", "days", "delta_yuan"], rows)
 
 # ---------------- 11) 新旧模型对照（旧模型仅供审计） ----------------
 old = json.loads((ZZ / "outputs" / "q3" / "summary.json").read_text(encoding="utf-8"))["totals_natural_day"]
 rows = [
-    ["总费用/元", f"{old['total_cost_yuan']:.4f}", f"{tot['total_cost_yuan']:.4f}",
-     f"{(tot['total_cost_yuan'] - old['total_cost_yuan']):.4f}"],
-    ["紧急购电量/kWh", f"{old['emergency_kwh']:.4f}", f"{tot['emergency_kwh']:.4f}",
-     f"{(tot['emergency_kwh'] - old['emergency_kwh']):.4f}"],
-    ["紧急购电费/元", f"{old['emergency_cost_yuan']:.4f}", f"{tot['emergency_cost_yuan']:.4f}",
-     f"{(tot['emergency_cost_yuan'] - old['emergency_cost_yuan']):.4f}"],
+    ["总费用/元", repr(float(old['total_cost_yuan'])), repr(float(tot['total_cost_yuan'])),
+     repr(float((tot['total_cost_yuan'] - old['total_cost_yuan'])))],
+    ["紧急购电量/kWh", repr(float(old['emergency_kwh'])), repr(float(tot['emergency_kwh'])),
+     repr(float((tot['emergency_kwh'] - old['emergency_kwh'])))],
+    ["紧急购电费/元", repr(float(old['emergency_cost_yuan'])), repr(float(tot['emergency_cost_yuan'])),
+     repr(float((tot['emergency_cost_yuan'] - old['emergency_cost_yuan'])))],
 ]
 w("q3_old_vs_new.csv", ["metric", "old_model_value", "current_model_value", "delta"],
   rows)
