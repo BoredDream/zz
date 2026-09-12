@@ -1,0 +1,33 @@
+{
+  "mode": "alt",
+  "variant": "3",
+  "method": "highs-ds",
+  "K": 30,
+  "stages": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "elapsed_seconds": 549.9009409999999,
+  "reference_total_cost_yuan": 13847794.940061364,
+  "alt_total_cost_yuan": 13847794.940061364,
+  "total_gap_yuan": 0.0,
+  "total_gap_pct": 0.0,
+  "max_abs_daily_gap_yuan": 0.0,
+  "worst_day": "2025-02-01",
+  "days_with_gap_over_1yuan": 0,
+  "delivery_days": 334,
+  "alt_totals": {
+    "total_cost_yuan": 13847794.940061364,
+    "plan_cost_yuan": 12740081.271038942,
+    "adjust_cost_yuan": 878485.2356566917,
+    "emergency_cost_yuan": 229228.43336573849,
+    "emergency_kwh": 41691.452379821334,
+    "charge_kwh": 6647718.729329925,
+    "discharge_kwh": 5383199.375670889,
+    "curtail_kwh": 1266943.6138411527,
+    "adjust_up_kwh": 590930.9215533342,
+    "adjust_down_kwh": 301761.578537892
+  }
+}

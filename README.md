@@ -30,6 +30,10 @@
 - `scripts/export_q4.py`：第四问全年回测与产物落盘（两个变体）。
 - `scripts/build_result4.mjs`：用官方附件5模板生成 `result4-2.xlsx` / `result4-3.xlsx`。
 - `scripts/validate_q4.py`：第四问独立验收（物理约束、费用口径恒等、实际电价核对、工作簿逐格对账）。
+- `scripts/verify_q4.py`：第四问独立复算（第二套实现，不 import 模型；从原始附件重算结算、能量平衡与储能轨迹）。
+- `scripts/q4_lambda_sensitivity.py`：第四问终端储能价值 λ 的全年敏感性扫描（两个变体各 7 点，`src/` 未改动）。
+- `scripts/q4_perfect_foresight.py`：完美预见电价对照，把第三问→第四问的 +5.20% 拆成「波动风险」与「预测误差信息缺失」。
+- `scripts/q4_solver_uniqueness_check.py`：第四问求解器退化与配置敏感性检验（换算法对照 + LP 级普查）；不修改 `src/`。
 - `outputs/q4/`：第四问工作簿与结果。
 - `docs/q3_model.md`、`docs/q3_derivation.md`：第三问**旧模型**（共同储能轨迹）的模型与推导，保留作对照。
 - `src/q3_solver.py`：第三问旧模型（因果滚动SAA/MPC、共同储能轨迹、8种预报组合、冻结预报基线及结算敏感性回测，含按策略检查点与断点续跑），结果保留在 `outputs/q3/`。
@@ -170,6 +174,57 @@ node scripts\build_result4.mjs 2 30
 模型定义见 `docs/q4_model.md`，输出位于 `outputs/q4/`。4-2直接继承Q2，4-3直接继承Q3；
 各自只把固定价格替换为因果预测的波动价格，其余预测器、时域、SOC和执行规则保持不变。
 4-3在6/12/18点用已实现电价继续滚动修正。
+
+### 独立复算（第二套实现）
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\verify_q4.py          # 两个变体都跑，约 5 s
+```
+
+该脚本**不 import `src/q4_solver.py` 或 `src/q4_q2_solver.py`**：只读原始附件 2/4 与
+已落盘明细 npz，从零重算结算费用、能量平衡与储能轨迹。偏差应为 0.000e+00。
+⚠️ 变体 4-2 的实时层规则**未被重放**（其 SAA 参考充放电轨迹没有落盘），
+对 4-2 只做结算与不变量复算。结论见报告第 8 节。
+
+### 终端储能价值 λ 的敏感性扫描
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_lambda_sensitivity.py run 3 0.478    # 每个点一次
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_lambda_sensitivity.py run 2 0.33417
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_lambda_sensitivity.py assemble       # -> lambda_sensitivity_q4_K30.json
+```
+
+`run` 一次只跑一个点，可多进程并行（14 个并行 ≈ 10 分钟；4-2 约 222 s、4-3 约 399 s）。
+该脚本**不修改 `src/`**：4-3 直接替换模块全局量 `q4_solver.LAM`；4-2 的 `terminal` 是
+`backtest` 内的局部变量，故包装 `q4_q2_solver.solve_saa` 覆盖它（不能改用
+`cfg.eta_discharge`，它同时是 SOC 递推里的效率）。各变体的基准点应与
+`summary_q4-<v>_K30.json` 逐位相同（`assemble` 会检查）。结论见报告第 9 节。
+
+### 完美预见电价对照
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_perfect_foresight.py 30         # 约 505 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_perfect_foresight.py enrich 30  # 只补存量转移字段，约 2 s
+```
+
+把 `q4_solver.price_hat` 整个换成当日**实际**电价（`src/` 未改动），其余一字不动，
+用来把「第三问 → 第四问 +5.20%」拆成价格波动风险与预测误差信息缺失两项。
+`enrich` 子命令为已落盘的结果补算「期末存量转移」对照（按影子价值 λ 折算），
+不需要重跑回测；正常整跑会自动附带该字段。结论见报告第 10 节。
+
+### 求解器退化与配置敏感性检验
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_solver_uniqueness_check.py 2 alt highs-ds    # 约 210 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_solver_uniqueness_check.py 3 alt highs-ds    # 约 550 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_solver_uniqueness_check.py 3 alt highs-ipm   # 约 1034 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q4_solver_uniqueness_check.py 3 census 20       # 约 1999 s
+```
+
+该脚本**不修改 `src/`**：两个求解器模块都写了 `from scipy.optimize import linprog`，
+故 `M2.linprog` 与 `M3.linprog` 这两个**属性**指向同一个函数对象，但它们位于不同的
+模块命名空间，改一个不影响另一个（已实测），因此两个变体可以分别独立打补丁。
+结论（含 LP 级退化普查）见报告第 11 节。
 
 ## 第三问运行（旧模型，保留对照）
 

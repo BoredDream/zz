@@ -1,0 +1,62 @@
+{
+  "meta": {
+    "purpose": "完美预见电价对照：拆分第三问→第四问的 +5.20%",
+    "method": "只替换 q4_solver.price_hat 为当日实际电价；负荷/光伏场景、λ、实时层、滚动时域均不变",
+    "lambda_kept": 0.478,
+    "lambda_note": "λ 保持 0.478（与 4-3 一致），以免横向比较混入终端价值变化",
+    "price_convention": "模板行口径 144 长；d=0 沿用附件1 冷启动先验",
+    "stages": [
+      0,
+      1,
+      2,
+      3
+    ],
+    "K": 30,
+    "S0": 6000.0,
+    "delivery_start": "2025-02-01",
+    "delivery_end": "2025-12-31",
+    "delivery_days": 334,
+    "elapsed_seconds": 504.57052249999833
+  },
+  "totals": {
+    "total_cost_yuan": 13730479.244845552,
+    "plan_cost_yuan": 12626991.510479994,
+    "adjust_cost_yuan": 892410.5273007308,
+    "emergency_cost_yuan": 211077.2070648394,
+    "emergency_kwh": 40613.064339400626,
+    "charge_kwh": 7003105.4790935125,
+    "discharge_kwh": 5675446.811302056,
+    "curtail_kwh": 1258219.8515420833,
+    "adjust_up_kwh": 606323.22068716,
+    "adjust_down_kwh": 270726.6613838638
+  },
+  "decomposition": {
+    "c_q3_deterministic_price_known_yuan": 13162682.885500716,
+    "c_q4_PF_volatile_price_known_yuan": 13730479.244845552,
+    "c_q4_3_volatile_price_forecast_yuan": 13847794.940061364,
+    "a_price_volatility_risk_cost_yuan": 567796.3593448363,
+    "a_pct_of_q3": 4.313682584956058,
+    "b_forecast_error_information_loss_yuan": 117315.69521581195,
+    "b_pct_of_q3": 0.8912749493117428,
+    "total_gap_yuan": 685112.0545606483,
+    "total_gap_pct_of_q3": 5.204957534267796,
+    "identity_residual_yuan": 0.0
+  },
+  "soc_end_mean_daily_kwh": 6556.055156908715,
+  "soc_end_delivery_kwh": 6972.781460706241,
+  "src_unmodified": true,
+  "inventory_contamination": {
+    "lambda_used_for_valuation_yuan_per_kwh": 0.478,
+    "terminal_soc_kwh": {
+      "q3": 8914.93218925726,
+      "q4_3": 9668.195438027007,
+      "perfect_foresight": 6972.781460706241
+    },
+    "a_stock_transfer_yuan": -928.3480482473874,
+    "a_stock_transfer_pct_of_gap": 0.16350017624603672,
+    "b_stock_transfer_yuan": -1288.4078811593263,
+    "b_stock_transfer_pct_of_gap": 1.0982399914940564,
+    "a_pure_efficiency_yuan": 568724.7073930837,
+    "b_pure_efficiency_yuan": 118604.10309697127
+  }
+}

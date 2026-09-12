@@ -1,0 +1,352 @@
+{
+  "meta": {
+    "purpose": "第四问终端储能价值 λ 的全年敏感性扫描",
+    "model": {
+      "2": "src/q4_q2_solver.py",
+      "3": "src/q4_solver.py"
+    },
+    "settlement_price": "附件4 实际电价",
+    "K": 30,
+    "S0": 6000.0,
+    "baseline_lam": {
+      "2": 0.33417,
+      "3": 0.478
+    }
+  },
+  "variants": {
+    "2": {
+      "baseline_reproduction_check": {
+        "baseline_lam": 0.33417,
+        "rerun_matches_delivered": true,
+        "delivered_total_cost_yuan": 15202115.127496772,
+        "rerun_total_cost_yuan": 15202115.127496772,
+        "abs_gap_yuan": 0.0
+      },
+      "scan": [
+        {
+          "lam": 0.0,
+          "lam_over_baseline": 0.0,
+          "total_cost_yuan": 15235300.17471436,
+          "delta_vs_baseline_yuan": 33185.04721758887,
+          "delta_pct": 0.21829230300700608,
+          "emergency_kwh": 287298.32400903216,
+          "emergency_cost_yuan": 1754126.06644671,
+          "charge_kwh": 6146678.052644699,
+          "discharge_kwh": 4979255.320864399,
+          "curtail_kwh": 1933192.6340122253,
+          "soc_start_delivery_kwh": 1771.666491111115,
+          "soc_end_delivery_kwh": 1276.0017997916666,
+          "soc_end_mean_daily_kwh": 1899.7968519795675,
+          "soc_band_hits_delivery": {
+            "at_min": 1873,
+            "at_max": 6483
+          }
+        },
+        {
+          "lam": 0.167085,
+          "lam_over_baseline": 0.5,
+          "total_cost_yuan": 15221646.490043184,
+          "delta_vs_baseline_yuan": 19531.362546412274,
+          "delta_pct": 0.12847792812122893,
+          "emergency_kwh": 280848.7696864097,
+          "emergency_cost_yuan": 1738177.8097360062,
+          "charge_kwh": 6129510.201094695,
+          "discharge_kwh": 4965381.890023924,
+          "curtail_kwh": 1924820.083665907,
+          "soc_start_delivery_kwh": 1807.8097300316294,
+          "soc_end_delivery_kwh": 1276.001799791666,
+          "soc_end_mean_daily_kwh": 1965.3097038206147,
+          "soc_band_hits_delivery": {
+            "at_min": 1734,
+            "at_max": 6378
+          }
+        },
+        {
+          "lam": 0.2506275,
+          "lam_over_baseline": 0.75,
+          "total_cost_yuan": 15213070.925300837,
+          "delta_vs_baseline_yuan": 10955.797804065049,
+          "delta_pct": 0.07206758870184071,
+          "emergency_kwh": 277175.84286961664,
+          "emergency_cost_yuan": 1726846.1274784366,
+          "charge_kwh": 6123564.428998829,
+          "discharge_kwh": 4960646.280877289,
+          "curtail_kwh": 1920581.7056977476,
+          "soc_start_delivery_kwh": 1898.1700751348894,
+          "soc_end_delivery_kwh": 1276.9551993102075,
+          "soc_end_mean_daily_kwh": 2006.3539370051972,
+          "soc_band_hits_delivery": {
+            "at_min": 1653,
+            "at_max": 6342
+          }
+        },
+        {
+          "lam": 0.33417,
+          "lam_over_baseline": 1.0,
+          "total_cost_yuan": 15202115.127496772,
+          "delta_vs_baseline_yuan": 0.0,
+          "delta_pct": 0.0,
+          "emergency_kwh": 272838.07347501605,
+          "emergency_cost_yuan": 1712339.2691000607,
+          "charge_kwh": 6119356.141943168,
+          "discharge_kwh": 4957242.124948501,
+          "curtail_kwh": 1914234.6566681466,
+          "soc_start_delivery_kwh": 1922.8605438888887,
+          "soc_end_delivery_kwh": 1296.5827944164375,
+          "soc_end_mean_daily_kwh": 2056.6714623520093,
+          "soc_band_hits_delivery": {
+            "at_min": 1521,
+            "at_max": 6305
+          }
+        },
+        {
+          "lam": 0.501255,
+          "lam_over_baseline": 1.5,
+          "total_cost_yuan": 15161569.029053675,
+          "delta_vs_baseline_yuan": -40546.0984430965,
+          "delta_pct": -0.266713533630325,
+          "emergency_kwh": 259838.0661636121,
+          "emergency_cost_yuan": 1667881.7191646455,
+          "charge_kwh": 6380774.11547479,
+          "discharge_kwh": 5170611.842974406,
+          "curtail_kwh": 1916873.479437017,
+          "soc_start_delivery_kwh": 9899.317941627809,
+          "soc_end_delivery_kwh": 7471.751897381018,
+          "soc_end_mean_daily_kwh": 7560.996187999047,
+          "soc_band_hits_delivery": {
+            "at_min": 1196,
+            "at_max": 6923
+          }
+        },
+        {
+          "lam": 0.66834,
+          "lam_over_baseline": 2.0,
+          "total_cost_yuan": 15238575.050824106,
+          "delta_vs_baseline_yuan": 36459.923327334225,
+          "delta_pct": 0.2398345429011295,
+          "emergency_kwh": 256058.09269320228,
+          "emergency_cost_yuan": 1663141.1742969109,
+          "charge_kwh": 6653996.046236048,
+          "discharge_kwh": 5390675.530040909,
+          "curtail_kwh": 2008415.5502455202,
+          "soc_start_delivery_kwh": 10262.712095000003,
+          "soc_end_delivery_kwh": 9219.675884212034,
+          "soc_end_mean_daily_kwh": 9660.913754378096,
+          "soc_band_hits_delivery": {
+            "at_min": 1123,
+            "at_max": 7517
+          }
+        },
+        {
+          "lam": 1.00251,
+          "lam_over_baseline": 3.0,
+          "total_cost_yuan": 15294969.38787401,
+          "delta_vs_baseline_yuan": 92854.26037723757,
+          "delta_pct": 0.6107982974637993,
+          "emergency_kwh": 257718.83823267353,
+          "emergency_cost_yuan": 1675514.3486735579,
+          "charge_kwh": 6734760.405213066,
+          "discharge_kwh": 5455649.9454569705,
+          "curtail_kwh": 2106346.9516365873,
+          "soc_start_delivery_kwh": 10477.374077685186,
+          "soc_end_delivery_kwh": 9928.466039467596,
+          "soc_end_mean_daily_kwh": 10081.632453851384,
+          "soc_band_hits_delivery": {
+            "at_min": 1142,
+            "at_max": 8123
+          }
+        }
+      ],
+      "range": {
+        "min_cost": {
+          "lam": 0.501255,
+          "total_cost_yuan": 15161569.029053675
+        },
+        "max_cost": {
+          "lam": 1.00251,
+          "total_cost_yuan": 15294969.38787401
+        },
+        "spread_yuan": 133400.35882033408,
+        "spread_pct_of_baseline": 0.8775118310941262,
+        "costs_monotone_in_lam": false
+      },
+      "points": 7,
+      "point_files": [
+        "q4-2_lam0_K30.json",
+        "q4-2_lam0p167085_K30.json",
+        "q4-2_lam0p2506275_K30.json",
+        "q4-2_lam0p33417_K30.json",
+        "q4-2_lam0p501255_K30.json",
+        "q4-2_lam0p66834_K30.json",
+        "q4-2_lam1p00251_K30.json"
+      ]
+    },
+    "3": {
+      "baseline_reproduction_check": {
+        "baseline_lam": 0.478,
+        "rerun_matches_delivered": true,
+        "delivered_total_cost_yuan": 13847794.940061364,
+        "rerun_total_cost_yuan": 13847794.940061364,
+        "abs_gap_yuan": 0.0
+      },
+      "scan": [
+        {
+          "lam": 0.0,
+          "lam_over_baseline": 0.0,
+          "total_cost_yuan": 13884270.761849105,
+          "delta_vs_baseline_yuan": 36475.821787741035,
+          "delta_pct": 0.26340527098807076,
+          "emergency_kwh": 60475.293786433525,
+          "emergency_cost_yuan": 278906.900655501,
+          "charge_kwh": 6339896.607545023,
+          "discharge_kwh": 5135619.601254149,
+          "curtail_kwh": 1222146.6752876358,
+          "soc_start_delivery_kwh": 1537.0546029789941,
+          "soc_end_delivery_kwh": 1200.0,
+          "soc_end_mean_daily_kwh": 1714.4004340389176,
+          "soc_band_hits_delivery": {
+            "at_min": 1178,
+            "at_max": 4321
+          }
+        },
+        {
+          "lam": 0.239,
+          "lam_over_baseline": 0.5,
+          "total_cost_yuan": 13871612.652065793,
+          "delta_vs_baseline_yuan": 23817.71200442873,
+          "delta_pct": 0.17199642331158227,
+          "emergency_kwh": 52124.51356484669,
+          "emergency_cost_yuan": 251587.40416836806,
+          "charge_kwh": 6329424.468707625,
+          "discharge_kwh": 5127174.145494939,
+          "curtail_kwh": 1221847.2316833066,
+          "soc_start_delivery_kwh": 1584.5663093847113,
+          "soc_end_delivery_kwh": 1206.4264852090141,
+          "soc_end_mean_daily_kwh": 1782.8102365683287,
+          "soc_band_hits_delivery": {
+            "at_min": 984,
+            "at_max": 4306
+          }
+        },
+        {
+          "lam": 0.3585,
+          "lam_over_baseline": 0.75,
+          "total_cost_yuan": 13856306.936946807,
+          "delta_vs_baseline_yuan": 8511.996885443106,
+          "delta_pct": 0.061468247632823214,
+          "emergency_kwh": 46745.37448627148,
+          "emergency_cost_yuan": 236569.34947583664,
+          "charge_kwh": 6321850.944642419,
+          "discharge_kwh": 5121048.022341263,
+          "curtail_kwh": 1222456.3704480587,
+          "soc_start_delivery_kwh": 1646.8543257855297,
+          "soc_end_delivery_kwh": 1259.346347001319,
+          "soc_end_mean_daily_kwh": 1927.4602835417118,
+          "soc_band_hits_delivery": {
+            "at_min": 819,
+            "at_max": 4299
+          }
+        },
+        {
+          "lam": 0.478,
+          "lam_over_baseline": 1.0,
+          "total_cost_yuan": 13847794.940061364,
+          "delta_vs_baseline_yuan": 0.0,
+          "delta_pct": 0.0,
+          "emergency_kwh": 41691.452379821334,
+          "emergency_cost_yuan": 229228.43336573849,
+          "charge_kwh": 6647718.729329925,
+          "discharge_kwh": 5383199.375670889,
+          "curtail_kwh": 1266943.6138411527,
+          "soc_start_delivery_kwh": 8053.978675420839,
+          "soc_end_delivery_kwh": 9668.195438027007,
+          "soc_end_mean_daily_kwh": 7457.975264412206,
+          "soc_band_hits_delivery": {
+            "at_min": 642,
+            "at_max": 4886
+          }
+        },
+        {
+          "lam": 0.717,
+          "lam_over_baseline": 1.5,
+          "total_cost_yuan": 13960577.681020841,
+          "delta_vs_baseline_yuan": 112782.74095947668,
+          "delta_pct": 0.8144454871526152,
+          "emergency_kwh": 43154.492119541304,
+          "emergency_cost_yuan": 238290.94564344067,
+          "charge_kwh": 7129862.184347843,
+          "discharge_kwh": 5775560.330604472,
+          "curtail_kwh": 1371911.5009201998,
+          "soc_start_delivery_kwh": 10282.764790590665,
+          "soc_end_delivery_kwh": 9869.47447645306,
+          "soc_end_mean_daily_kwh": 10181.223288273364,
+          "soc_band_hits_delivery": {
+            "at_min": 632,
+            "at_max": 5417
+          }
+        },
+        {
+          "lam": 0.956,
+          "lam_over_baseline": 2.0,
+          "total_cost_yuan": 13967568.05284796,
+          "delta_vs_baseline_yuan": 119773.11278659478,
+          "delta_pct": 0.8649255228360797,
+          "emergency_kwh": 43181.547019266596,
+          "emergency_cost_yuan": 238557.16036932135,
+          "charge_kwh": 7138908.832545847,
+          "discharge_kwh": 5782855.1989915045,
+          "curtail_kwh": 1388418.1657981174,
+          "soc_start_delivery_kwh": 10282.764790590665,
+          "soc_end_delivery_kwh": 9906.048535727672,
+          "soc_end_mean_daily_kwh": 10227.97868407383,
+          "soc_band_hits_delivery": {
+            "at_min": 633,
+            "at_max": 5473
+          }
+        },
+        {
+          "lam": 1.434,
+          "lam_over_baseline": 3.0,
+          "total_cost_yuan": 13972333.436825188,
+          "delta_vs_baseline_yuan": 124538.49676382355,
+          "delta_pct": 0.8993381061957795,
+          "emergency_kwh": 42722.54146249449,
+          "emergency_cost_yuan": 236405.69216593308,
+          "charge_kwh": 7140934.676107219,
+          "discharge_kwh": 5784508.987201742,
+          "curtail_kwh": 1398599.55220527,
+          "soc_start_delivery_kwh": 10297.048041173726,
+          "soc_end_delivery_kwh": 9906.048535727672,
+          "soc_end_mean_daily_kwh": 10250.513589450358,
+          "soc_band_hits_delivery": {
+            "at_min": 622,
+            "at_max": 5491
+          }
+        }
+      ],
+      "range": {
+        "min_cost": {
+          "lam": 0.478,
+          "total_cost_yuan": 13847794.940061364
+        },
+        "max_cost": {
+          "lam": 1.434,
+          "total_cost_yuan": 13972333.436825188
+        },
+        "spread_yuan": 124538.49676382355,
+        "spread_pct_of_baseline": 0.8993381061957845,
+        "costs_monotone_in_lam": false
+      },
+      "points": 7,
+      "point_files": [
+        "q4-3_lam0_K30.json",
+        "q4-3_lam0p239_K30.json",
+        "q4-3_lam0p3585_K30.json",
+        "q4-3_lam0p478_K30.json",
+        "q4-3_lam0p717_K30.json",
+        "q4-3_lam0p956_K30.json",
+        "q4-3_lam1p434_K30.json"
+      ]
+    }
+  }
+}

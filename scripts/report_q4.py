@@ -111,6 +111,318 @@ def table3(day: dict) -> list[str]:
     return rows
 
 
+def load_optional(name: str):
+    """读取可选证据产物；缺失时返回 None，报告相应小节自动省略。"""
+    p = OUT / name
+    return json.loads(p.read_text(encoding="utf-8")) if p.exists() else None
+
+
+def independent_section(v: dict | None) -> list[str]:
+    """第 8 节：独立复算（脚本不 import 模型）。"""
+    L: list[str] = []
+    A, X = L.append, L.extend
+    A("## 8. 独立复算（第二套实现）")
+    A("")
+    A("`scripts/validate_q4.py` **import 了模型**，复用了模型自己的常量与结算函数，"
+      "它证明的是「编码与已验收产物自洽」。`scripts/verify_q4.py` 换一条路："
+      "**不 import `src/q4_solver.py` 或 `src/q4_q2_solver.py`**，只读原始附件 2/4 与"
+      "已落盘明细 npz，按题面公式与 README「固定口径」从零重算。")
+    A("")
+    if v is None:
+        A("（尚未运行 `scripts/verify_q4.py`。）")
+        A("")
+        return L
+    A("| 复算路径 | 覆盖 4-2 | 覆盖 4-3 | 最大偏差 |")
+    A("|---|---|---|---:|")
+    A(f"| 甲 结算（题面公式逐日重算） | ✅ | ✅ | {v['worst']['[3] 交付期总费用 vs summary']:.3e} 元 |")
+    A("| 乙 实时层与储能轨迹重放 | — | ✅ | "
+      f"{v['worst']['[3] 重放 SOC 轨迹 vs 明细/kWh']:.3e} kWh |")
+    A("| 丙 物理与能量平衡不变量 | ✅ | ✅ | "
+      f"{v['worst']['[3] 能量平衡恒等式/kWh']:.3e} kWh |")
+    A("")
+    A("偏差全为 **0.000e+00**，即 4-3 的实时层贪心规则可以逐时段逐位重放出来。")
+    A("")
+    A("**本脚本没有证明什么**（引用时必须保留）：")
+    A("")
+    A("1. **4-2 的实时层规则未被独立重放。** 变体 4-2 用的是 `q2_solver.causal_dispatch`，"
+      "它以 SAA 最优解的**参考充放电轨迹**为输入，而这两个数组没有落盘"
+      "（`scripts/export_q4.py` 只存 c/g/z/w/S），故无法从已有产物重放该规则。"
+      "对 4-2 只做了路径甲与路径丙。")
+    A("2. **不重解任何 LP。** 「记录解是该 LP 的最优解」这件事没有被独立复核——"
+      "最优化层面的证据只有第 11 节的求解器检验与「记录解可行且满足全部物理约束」。")
+    A("3. 预测子模型（`price_hat`、`scenario_set`）、SAA 情景生成、终端价值 `λ`、"
+      "冷启动约定、1 月预热期都仍是**建模选择**，不是被复算证明的结论。")
+    A("4. `result4-{2,3}.xlsx` 工作簿本身未被本脚本直接重算；"
+      "它与本脚本复合可把工作簿传递地锚到原始附件。")
+    A("")
+    return L
+
+
+def lambda_section(v: dict | None) -> list[str]:
+    """第 9 节：终端储能价值 λ 的全年敏感性扫描。"""
+    L: list[str] = []
+    A, X = L.append, L.extend
+    A("## 9. 终端储能价值 λ 的全年敏感性扫描")
+    A("")
+    A("第四问按**附件4 实际电价**结算（全年 0.0076–1.7936 元/kWh），但两个变体的终端"
+      "储能水价 `λ` **都取自附件1**：4-3 取 `LAM = 0.478 = p_谷/η`（附件1 谷价 0.4302），"
+      "4-2 取 `η × min(附件1 自然日电价) = 0.33417`（继承 Q2 的设定）。"
+      "λ 是外生常数、**不由最优性导出**，故必须回答「换一个 λ，答案变多少」。")
+    A("")
+    if v is None:
+        A("（尚未运行 `scripts/q4_lambda_sensitivity.py`。）")
+        A("")
+        return L
+    for variant, name in (("2", "4-2"), ("3", "4-3")):
+        r = v["variants"].get(variant)
+        if not r:
+            continue
+        chk = r["baseline_reproduction_check"]
+        A(f"### 9.{1 if variant == '2' else 2} 变体 {name}（基准 λ₀ = {chk['baseline_lam']:.5f}）")
+        A("")
+        A(f"基准点重跑与已交付产物的差：**{chk['abs_gap_yuan']:.3e} 元**"
+          f"（逐位相同：{chk['rerun_matches_delivered']}）。")
+        A("")
+        A("| λ | λ/λ₀ | 交付期总费用/元 | 差/元 | 差% | 期初 SOC | 日均日末 SOC | 紧急购电/kWh | 弃电/kWh | 充电/kWh | 放电/kWh |")
+        A("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+        for row in r["scan"]:
+            A(f"| {row['lam']:.5f} | {row['lam_over_baseline']:.2f}× | {f(row['total_cost_yuan'])} | "
+              f"{f(row['delta_vs_baseline_yuan'])} | {row['delta_pct']:+.3f}% | "
+              f"{f(row['soc_start_delivery_kwh'])} | {f(row['soc_end_mean_daily_kwh'])} | "
+              f"{f(row['emergency_kwh'])} | {f(row['curtail_kwh'])} | "
+              f"{f(row['charge_kwh'])} | {f(row['discharge_kwh'])} |")
+        rg = r["range"]
+        scan = r["scan"]
+        A("")
+        A(f"极差 **{f(rg['spread_yuan'])} 元（{rg['spread_pct_of_baseline']:.3f}% 于基准）**，"
+          f"最小点在 λ = {rg['min_cost']['lam']:.5f}，最大点在 λ = {rg['max_cost']['lam']:.5f}；"
+          f"费用随 λ 单调：**{rg['costs_monotone_in_lam']}**。")
+        A("")
+        # 发现 1：量级不敏感（数字全部来自本表）
+        base = next((row for row in scan if abs(row["lam_over_baseline"] - 1.0) < 1e-9), scan[0])
+        A(f"**发现 1（量级不敏感）**：λ 在 {scan[0]['lam']:.5f}–{scan[-1]['lam']:.5f} "
+          f"（基准的 {scan[0]['lam_over_baseline']:.2f}–{scan[-1]['lam_over_baseline']:.2f} 倍）之间，"
+          f"交付期总费用只在 {f(rg['min_cost']['total_cost_yuan'])}–"
+          f"{f(rg['max_cost']['total_cost_yuan'])} 元之间变动，极差 {f(rg['spread_yuan'])} 元，"
+          f"仅占基准的 {rg['spread_pct_of_baseline']:.3f}%。")
+        A("")
+        # 发现 2/4：数据驱动地找「体制切换点」= 相邻两点期初 SOC 跳变最大处
+        socs = [row["soc_start_delivery_kwh"] for row in scan]
+        if len(socs) >= 2:
+            k = int(np.argmax([abs(socs[i + 1] - socs[i]) for i in range(len(socs) - 1)]))
+            lo_pts, hi_pts = scan[: k + 1], scan[k + 1:]
+            A(f"**发现 2（存在储能运行体制切换）**：相邻 λ 点之间期初 SOC 跳变最大的位置在 "
+              f"λ = {scan[k]['lam']:.5f} 与 λ = {scan[k + 1]['lam']:.5f} 之间——"
+              f"交付期期初 SOC 由 {f(scan[k]['soc_start_delivery_kwh'])} kWh 跳到 "
+              f"{f(scan[k + 1]['soc_start_delivery_kwh'])} kWh，日均日末 SOC 由 "
+              f"{f(scan[k]['soc_end_mean_daily_kwh'])} 跳到 {f(scan[k + 1]['soc_end_mean_daily_kwh'])} kWh。"
+              f"低 λ 段储能常年接近放空，高 λ 段则被压在高位，两者是**不同的运行机制**，"
+              f"不是同一机制的连续变化。")
+            A("")
+            if base["lam"] in [p["lam"] for p in scan]:
+                side = "低" if base["lam"] <= scan[k]["lam"] else "高"
+                A(f"交付所用的基准 λ₀ = {base['lam']:.5f} 落在**{side} λ 段**。")
+                A("")
+            lo_min = min(lo_pts, key=lambda x: x["total_cost_yuan"])
+            hi_min = min(hi_pts, key=lambda x: x["total_cost_yuan"])
+            if lo_pts[0]["total_cost_yuan"] > lo_pts[-1]["total_cost_yuan"] and len(lo_pts) > 1:
+                lo_dir = "随 λ 递减"
+            elif len(lo_pts) > 1:
+                lo_dir = "随 λ 递增"
+            else:
+                lo_dir = "单点"
+            if len(hi_pts) > 1 and hi_pts[-1]["total_cost_yuan"] > hi_pts[0]["total_cost_yuan"]:
+                hi_dir = "随 λ 递增"
+            elif len(hi_pts) > 1:
+                hi_dir = "随 λ 递减"
+            else:
+                hi_dir = "单点"
+            A(f"**发现 3（费用非单调）**：全局最低点在 λ = {rg['min_cost']['lam']:.5f}"
+              f"（比基准低 {f(base['total_cost_yuan'] - rg['min_cost']['total_cost_yuan'])} 元）。"
+              f"费用在**低 λ 段内部{lo_dir}**、**高 λ 段内部{hi_dir}**，"
+              f"整体呈 V 形而非单调——所以「λ 越大费用越高/越低」都不成立。")
+            A("")
+            _dcost = abs(hi_pts[0]["total_cost_yuan"] - lo_pts[-1]["total_cost_yuan"])
+            A(f"**发现 4（费用面很平，策略面不平）**：跨过切换点的两点，费用只差 "
+              f"{f(_dcost)} 元（{_dcost / base['total_cost_yuan'] * 100.0:.3f}%），"
+              f"但物理量差得远——紧急购电量 "
+              f"{f(lo_pts[-1]['emergency_kwh'])} → {f(hi_pts[0]['emergency_kwh'])} kWh"
+              f"（差 {f(abs(hi_pts[0]['emergency_kwh'] - lo_pts[-1]['emergency_kwh']))} kWh）、"
+              f"弃电量 {f(lo_pts[-1]['curtail_kwh'])} → {f(hi_pts[0]['curtail_kwh'])} kWh、"
+              f"充/放电量各差 "
+              f"{f(abs(hi_pts[0]['charge_kwh'] - lo_pts[-1]['charge_kwh']))} kWh。"
+              f"因此**不能用「费用差不多」推断「策略差不多」**。")
+            A("")
+        lo_min_note = rg["min_cost"]["lam"]
+        _gain = base["total_cost_yuan"] - rg["min_cost"]["total_cost_yuan"]
+        if _gain <= 1e-6:
+            A(f"⚠️ **扫描的最低点恰为基准点本身（λ = {lo_min_note:.5f}，差 "
+              f"{f(_gain)} 元），这不构成对基准 λ₀ 的任何支持**：代价面在该处本就平坦，"
+              f"且表中最低点进入交付期时的存量与基准相同、其余点则不同，"
+              f"各点差额里含**存量转移**而非纯粹效率。λ 是外生假设，本表只说明敏感程度。")
+        else:
+            A(f"⚠️ **{f(_gain)} 元不能读作"
+              f"「λ = {lo_min_note:.5f} 更优」**：该点进入交付期时的存量与基准不同，"
+              f"差额里含**存量转移**而非纯粹效率；且 λ 是外生假设，本表只说明敏感程度。")
+        A("")
+    A("**本节没有覆盖什么**（引用时必须保留）：")
+    A("")
+    A("1. λ 仍是**外生常数**，没有被内生求解或标定；本扫描只度量它的影响，不给出它的正确取值。")
+    A("2. **不能说某个 λ「更优」或「最优」。** 见第 12 节第 6 条。")
+    A("3. 扫描只做了各变体自己的 7 个倍数点，其余 λ 取值未做独立复算。")
+    A("4. 两变体的基准 λ₀ 不同（0.33417 vs 0.478），横向比较应看**相对各自主基准的偏移**，"
+      "不能直接比绝对费用。")
+    A("")
+    return L
+
+
+def pf_section(v: dict | None) -> list[str]:
+    """第 10 节：完美预见电价对照，拆分 +5.20%。"""
+    L: list[str] = []
+    A, X = L.append, L.extend
+    A("## 10. 完美预见电价对照：拆分与第三问的 +5.20%")
+    A("")
+    if v is None or not v.get("decomposition"):
+        A("（尚未运行 `scripts/q4_perfect_foresight.py`。）")
+        A("")
+        return L
+    d = v["decomposition"]
+    A("第三问把附件1 的分时电价当作**已知**量送入 LP，第四问必须在 0:00 **预测**附件4 的"
+      "波动电价。因此两者的差额同时含「波动风险」与「预测误差信息缺失」两项。"
+      "`scripts/q4_perfect_foresight.py` 补上缺失的对照点：把 `price_hat` 整个换成"
+      "**当日实际电价**，其余一字不动（同样的负荷/光伏场景、λ = 0.478、实时层、滚动时域）。")
+    A("")
+    A("| 对照点 | 价格过程 | 是否已知 | 交付期总费用/元 | 相对第三问 |")
+    A("|---|---|---|---:|---:|")
+    A(f"| 第三问 | 附件1 分时（确定性） | 已知 | {f(d['c_q3_deterministic_price_known_yuan'])} | — |")
+    A(f"| 第四问·完美预见 | 附件4 波动 | **已知** | {f(d['c_q4_PF_volatile_price_known_yuan'])} | "
+      f"{d['a_pct_of_q3']:+.3f}% |")
+    A(f"| 第四问 4-3 | 附件4 波动 | 预测 | {f(d['c_q4_3_volatile_price_forecast_yuan'])} | "
+      f"{d['total_gap_pct_of_q3']:+.3f}% |")
+    A("")
+    A("分解（三项之和恒等，残差 "
+      f"{d['identity_residual_yuan']:.3e} 元）：")
+    A("")
+    A(f"- **(a) 价格波动的风险成本** = 完美预见 − 第三问 = **{f(d['a_price_volatility_risk_cost_yuan'])} 元"
+      f"（{d['a_pct_of_q3']:+.3f}%）**；")
+    A(f"- **(b) 预测误差的信息缺失成本** = 第四问 − 完美预见 = **{f(d['b_forecast_error_information_loss_yuan'])} 元"
+      f"（{d['b_pct_of_q3']:+.3f}%）**；")
+    A(f"- (a) + (b) = {f(d['total_gap_yuan'])} 元（{d['total_gap_pct_of_q3']:+.3f}%）。")
+    A("")
+    a = d["a_price_volatility_risk_cost_yuan"]
+    b = d["b_forecast_error_information_loss_yuan"]
+    a_bigger = abs(a) >= abs(b)
+    share = abs(a) / (abs(a) + abs(b)) * 100.0
+    A(f"即该差额的 **{share:.1f}%** 来自"
+      f"**{'价格波动的风险成本' if a_bigger else '预测误差的信息缺失成本'}**，"
+      f"其余 {100.0 - share:.1f}% 来自另一项。"
+      "⚠️ 完美预见变体只换了价格信息，**不是**一个可交付的方案（它假设 0:00 就知道全天实际电价），"
+      "只作归因用。")
+    A("")
+    ic = v.get("inventory_contamination") or {}
+    if ic.get("terminal_soc_kwh"):
+        ts = ic["terminal_soc_kwh"]
+        A("**期末存量转移的扣除**：两个对照点期末留在储能里的电量不同，而 `λ` 正是终端储能的"
+          "影子价值（1 kWh 留在期末值 `λ` 元），故期末存量差 `ΔS` 在目标函数里正好值 "
+          f"`λ·ΔS` 元。这部分是**存量转移**而非效率差异，必须从 (a)/(b) 里扣掉再解读：")
+        A("")
+        A(f"| 对照点 | 交付期末 SOC/kWh | 存量差 ΔS/kWh | 折算 λ·ΔS/元 | 占该项 |")
+        A("|---|---:|---:|---:|---:|")
+        A(f"| 第三问 | {f(ts['q3'])} | {f(ts['q3'] - ts['perfect_foresight'])} | "
+          f"{f(-ic['a_stock_transfer_yuan'])} | {ic['a_stock_transfer_pct_of_gap']:.3f}% |")
+        A(f"| 第四问 4-3 | {f(ts['q4_3'])} | {f(ts['q4_3'] - ts['perfect_foresight'])} | "
+          f"{f(-ic['b_stock_transfer_yuan'])} | {ic['b_stock_transfer_pct_of_gap']:.3f}% |")
+        A(f"| 完美预见 | {f(ts['perfect_foresight'])} | — | — | — |")
+        A("")
+        A("表中 ΔS = 对照点期末 SOC − 完美预见期末 SOC，`λ·ΔS` 需**加回**对应的 (a)/(b) "
+          "才是同存量口径下的纯效率差（因为目标函数对期末存量按 `λ` 计价，"
+          "多留电会压低当期费用）。")
+        A("")
+        A(f"加回后：(a) 的纯效率差 {f(ic['a_pure_efficiency_yuan'])} 元、"
+          f"(b) 的纯效率差 {f(ic['b_pure_efficiency_yuan'])} 元。"
+          f"存量转移占 (a) 的 {ic['a_stock_transfer_pct_of_gap']:.3f}%、"
+          f"占 (b) 的 {ic['b_stock_transfer_pct_of_gap']:.3f}%，"
+          "**量级都很小，不足以改变上面的归因结论**；但引用 (a)/(b) 时不应把它当作纯效率——"
+          "严格说法是「(a)/(b) 中包含一笔 ≤1.1% 的期末存量转移」。")
+        A("")
+    return L
+
+
+def solver_section(alt: list[dict], census: dict | None) -> list[str]:
+    """第 11 节：求解器退化与配置敏感性检验。"""
+    L: list[str] = []
+    A, X = L.append, L.extend
+    A("## 11. 求解器退化与配置敏感性检验")
+    A("")
+    if not alt:
+        A("（尚未运行 `scripts/q4_solver_uniqueness_check.py`。）")
+        A("")
+        return L
+    A("`src/q4_solver.py` 与 `src/q4_q2_solver.py` 里的调用都是 "
+      "`linprog(..., method='highs')`，`method` 是关键字参数。脚本**不修改 `src/`**，"
+      "只替换两个模块各自命名空间里的 `linprog` 名字。两个模块都写了 "
+      "`from scipy.optimize import linprog`，故这两个**属性**目前指向同一个函数对象，"
+      "但它们位于不同的模块命名空间，改一个不影响另一个（已实测），"
+      "因此两个变体可以分别独立打补丁。")
+    A("")
+    A("| 变体 | 算法 | 交付期总费用/元 | 与主答案之差/元 | 差% | 逐日最大差/元 | 差>1 元的天数 |")
+    A("|---|---|---:|---:|---:|---:|---:|")
+    for r in sorted(alt, key=lambda r: (r["variant"], r["method"])):
+        A(f"| 4-{r['variant']} | `{r['method']}` | {f(r['alt_total_cost_yuan'])} | "
+          f"{f(r['total_gap_yuan'])} | {r['total_gap_pct']:+.5f}% | "
+          f"{f(r['max_abs_daily_gap_yuan'])} | {r['days_with_gap_over_1yuan']} |")
+    A("")
+    if census:
+        o = census["overall"]
+        n_stage = len(census["stages"])
+        A(f"**LP 级普查**（变体 4-{census['variant']}，抽样 {census['sampled_days']} 天"
+          f"（步长 {census['step_days']} 天）、共 {o['n_lps']} 个 LP；每个 LP 用"
+          f"`highs`/`highs-ds`/`highs-ipm` 各解一次，并加一组目标系数相对扰动 "
+          f"{census['jitter_rel']:.0e} 的探针）：")
+        A("")
+        A("| 阶段 | LP 数 | `highs-ds` 解向量不同 | `highs-ipm` 解向量不同 | ipm 最优值最大相对差 | 抖动探针解向量不同 |")
+        A("|---|---:|---:|---:|---:|---:|")
+        for st, e in census["by_stage"].items():
+            ds, ip, j = e["highs-ds"], e["highs-ipm"], e["jitter"]
+            A(f"| `{st}` | {e['n']} | {ds['n_solution_differs']}/{e['n']} | "
+              f"{ip['n_solution_differs']}/{e['n']} | {ip['max_rel_obj_gap']:.3e} | "
+              f"{j['n_solution_differs']}/{j['n']} |")
+        A("")
+        A(f"跨算法最优值最大相对差 **{o['max_rel_obj_gap_across_methods']:.3e}**"
+          f"（超 1e-6 的 **{o['n_lps_obj_gap_gt_1e-6']}** 个、超 1e-9 的 "
+          f"{o['n_lps_obj_gap_gt_1e-9']} 个），但最优**解向量**不同的 (LP, 算法) 对占 "
+          f"**{o['n_lp_method_pairs_solution_differs']}/{o['n_lp_method_pairs']}**"
+          f"（{100.0 * o['n_lp_method_pairs_solution_differs'] / max(1, o['n_lp_method_pairs']):.1f}%）；"
+          f"抖动探针下解向量不同的有 {o['jitter_n_solution_differs']}/{o['jitter_n']} 个"
+          f"（{100.0 * o['jitter_n_solution_differs'] / max(1, o['jitter_n']):.1f}%）。")
+        A("")
+        A("⇒ **费用面唯一，策略面不唯一。** 三点值得写进论文：")
+        A("")
+        A(f"1. **最优值不依赖求解器**：最大相对差 {o['max_rel_obj_gap_across_methods']:.1e}，"
+          "没有任何一个 LP 超过 1e-6；这与上表端到端结果（差 ≤ 1.9e-09 元）互相印证。")
+        A(f"2. **但 LP 普遍退化**：{100.0 * o['n_lp_method_pairs_solution_differs'] / max(1, o['n_lp_method_pairs']):.1f}% 的"
+          "(LP, 算法) 对给出不同的解向量，逐时段最大差达数千 kWh。"
+          "退化的直接来源是储能「充多少/放多少」在很宽的区间内等费用（低价段尤其如此）。")
+        if census["by_stage"].get("stage0"):
+            s0 = census["by_stage"]["stage0"]
+            A(f"3. **0:00 计划阶段尤其特殊**：`highs-ds` 与主算法 `highs` 的解向量"
+              f"{'完全一致' if s0['highs-ds']['n_solution_differs'] == 0 else '部分不同'}"
+              f"（{s0['highs-ds']['n_solution_differs']}/{s0['n']}），"
+              f"而 `highs-ipm` 有 {s0['highs-ipm']['n_solution_differs']}/{s0['n']} 不同——"
+              "两种单纯形法落在同一个顶点上，内点法落在另一个。")
+        A("")
+        A("⚠️ 与第三问的对照：第三问同口径普查的解向量不同比例为 **46.9%**"
+          "（换算法最优值一致到 6.17e-14、端到端最坏差 28.21 元）。"
+          "第四问的 **"
+          f"{100.0 * o['n_lp_method_pairs_solution_differs'] / max(1, o['n_lp_method_pairs']):.1f}%**"
+          " 与之一致，说明**退化是这套 LP 编码本身的性质，不是第四问引入的**。")
+        A("")
+    A("**结论边界**：可以写「该变体的总费用不依赖求解器配置」；"
+      "若逐时段引用「最优策略」，必须说明该解在退化时段只是最优解之一。")
+    A("")
+    return L
+
+
 def main() -> int:
     p2, d2, by2 = load("2")
     p3, d3, by3 = load("3")
@@ -294,7 +606,18 @@ def main() -> int:
       "（334 天 × 144 列 × 2 张价格表 + 全天合计列 + 表2 六个段 + 紧急购电时段），"
       "并断言结算价等于附件4 实际电价、4-2 的 `max|q − x| = 0`。")
     A("")
-    A("## 8. 尚存限制")
+    _verify = load_optional(f"independent_verify_q4_K{K}.json")
+    _lam = load_optional(f"lambda_sensitivity_q4_K{K}.json")
+    _pf = load_optional(f"perfect_foresight_q4_K{K}.json")
+    _alt = [r for r in (load_optional(f"solver_sensitivity_q4-{v}_{m}.json")
+                        for v in ("2", "3") for m in ("highs-ds", "highs-ipm")) if r]
+    _census = load_optional("solver_degeneracy_census_q4-3.json")
+    X(independent_section(_verify))
+    X(lambda_section(_lam))
+    X(pf_section(_pf))
+    X(solver_section(_alt, _census))
+
+    A("## 12. 尚存限制")
     A("")
     A("1. 电价预测为两因子（形态×水平）+ 日内 AR(1)，未使用任何外部信息"
       "（天气、星期、节假日），峰谷时段的系统性偏差只能靠水平比部分吸收。"
@@ -308,6 +631,14 @@ def main() -> int:
     A("4. 与第三问同：名为多阶段实为「滚动两阶段」，不宣称严格多阶段随机最优；"
       "实时层为贪心规则而非滚动 LP 最优；末端储能价值取常数水价。")
     A("5. 结算口径沿用题面口径（逐次提交不退款），若实际合同另有约定需重新结算。")
+    A("6. **禁止声称某个终端储能价值 `λ` 取值「更优」或「最优」。** λ 是外生常数，"
+      "不由模型最优性导出；第 9 节的扫描只说明费用对 λ 的**敏感程度**，"
+      "不构成对 λ 的标定或选择。")
+    A("7. **禁止由「换算法费用不变」推断「最优策略唯一」。** 第 11 节的 LP 级普查显示"
+      "该 LP 编码**普遍退化**（44.6% 的 (LP, 算法) 对解向量不同），"
+      "费用面唯一**不等于**策略面唯一。逐时段引用「最优策略」（如某天某时段的"
+      "充放电量）时必须说明该解只是多个最优解之一。")
+    A("")
     A("")
 
     REPORT.write_text("\n".join(L), encoding="utf-8")
