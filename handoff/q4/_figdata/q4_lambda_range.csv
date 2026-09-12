@@ -1,0 +1,3 @@
+﻿variant,baseline_lam,spread_yuan,spread_pct_of_baseline,min_lam,max_lam,costs_monotone_in_lam
+2,0.33417,133400.35882033408,0.8775118310941262,0.501255,1.00251,False
+3,0.478,124538.49676382355,0.8993381061957845,0.478,1.434,False

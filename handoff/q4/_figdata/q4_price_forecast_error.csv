@@ -1,0 +1,5 @@
+﻿stage,publish_hour,MAPE,MAE_yuan_per_kwh,MAE_same_window_no_update,MAE_persistence
+0,0,13.2%,0.0799,0.0799,0.0846
+1,6,9.1%,0.0556,0.0916,0.095
+2,12,11.6%,0.0837,0.0865,0.0892
+3,18,13.4%,0.0832,0.0631,0.0651

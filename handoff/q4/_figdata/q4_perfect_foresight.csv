@@ -1,0 +1,8 @@
+﻿kind,point,price_process,price_known,total_cost_yuan,gap_vs_q3_yuan,gap_pct_vs_q3,a_pure_efficiency_yuan,b_pure_efficiency_yuan,a_volatility_risk_yuan,b_forecast_error_yuan,total_gap_yuan,identity_residual_yuan,a_stock_transfer_yuan,b_stock_transfer_yuan
+point,第三问,deterministic,known,13162682.885500716,0.0,0.0000000000,,,,,,,,
+point,完美预见,volatile_attachment4,known,13730479.244845552,567796.3593448363,+4.3137,,,,,,,,
+point,4-3,volatile_attachment4,forecast,13847794.940061364,685112.0545606483,+5.2050,,,,,,,,
+decomposition,a 电价波动风险,deterministic->volatile,known,0.0,567796.3593448363,+4.3137,567796.3593448363,,567796.3593448363,117315.69521581195,685112.0545606483,0.0,-928.3480482473874,-1288.4078811593263
+decomposition,b 预测误差信息损失,volatile: known->forecast,forecast,0.0,117315.69521581195,+0.8913,,117315.69521581195,567796.3593448363,117315.69521581195,685112.0545606483,0.0,-928.3480482473874,-1288.4078811593263
+decomposition,a 纯效率（剔库存转移）,deterministic->volatile,known,0.0,568724.7073930837,+4.3207,568724.7073930837,,567796.3593448363,117315.69521581195,685112.0545606483,0.0,-928.3480482473874,-1288.4078811593263
+decomposition,b 纯效率（剔库存转移）,volatile: known->forecast,forecast,0.0,118604.10309697127,+0.9011,,118604.10309697127,567796.3593448363,117315.69521581195,685112.0545606483,0.0,-928.3480482473874,-1288.4078811593263

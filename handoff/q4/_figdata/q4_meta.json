@@ -1,0 +1,110 @@
+{
+  "model_shared": "q4_fluctuating_price_two_stage_saa",
+  "variant_note": "两变体共用同一 model 字符串，靠 variant 区分：variant='2' 为 4-2（仅 0:00 决策一次，q ≡ x），variant='3' 为 4-3（0:00 计划 + 6/12/18 点三次滚动调整）",
+  "variants": {
+    "2": {
+      "label": "4-2 波动电价 × 一次决策",
+      "stages": [
+        0
+      ],
+      "base_model": "q2_solver",
+      "total_cost_yuan": 15202115.127496772,
+      "elapsed_seconds": 125.54665939998813
+    },
+    "3": {
+      "label": "4-3 波动电价 × 四阶段滚动",
+      "stages": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "total_cost_yuan": 13847794.940061364,
+      "elapsed_seconds": 388.6564722000039
+    }
+  },
+  "delivery_period": {
+    "start": "2025-02-01",
+    "end": "2025-12-31",
+    "days": 334,
+    "note": "交付期自 2025-02-01 起 334 天；全年回测 365 天，2025 年 1 月仅作预热（附件2 缺 1/1 午夜负荷与光伏）"
+  },
+  "backtest_days": 365,
+  "K": 30,
+  "S0": 6000.0,
+  "eta": 0.9,
+  "S_max": 10800.0,
+  "S_min": 1200.0,
+  "C_max": 833.3333333333333,
+  "interval_limit_kwh": 833.3333333333333,
+  "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
+  "storage_convention": "bus_side_charge_and_discharge",
+  "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
+  "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
+  "settlement_price": "actual_price_附件4",
+  "lambda_baseline": {
+    "2": 0.33417,
+    "3": 0.478
+  },
+  "totals": {
+    "2": {
+      "total_cost_yuan": 15202115.127496772,
+      "plan_cost_yuan": 13489775.858396713,
+      "adjust_cost_yuan": 0.0,
+      "emergency_cost_yuan": 1712339.2691000607,
+      "emergency_kwh": 272838.07347501605,
+      "charge_kwh": 6119356.141943168,
+      "discharge_kwh": 4957242.124948501,
+      "curtail_kwh": 1914234.6566681466,
+      "adjust_up_kwh": 0.0,
+      "adjust_down_kwh": 0.0
+    },
+    "3": {
+      "total_cost_yuan": 13847794.940061364,
+      "plan_cost_yuan": 12740081.271038942,
+      "adjust_cost_yuan": 878485.2356566917,
+      "emergency_cost_yuan": 229228.43336573849,
+      "emergency_kwh": 41691.452379821334,
+      "charge_kwh": 6647718.729329925,
+      "discharge_kwh": 5383199.375670889,
+      "curtail_kwh": 1266943.6138411527,
+      "adjust_up_kwh": 590930.9215533342,
+      "adjust_down_kwh": 301761.578537892
+    }
+  },
+  "delivery_aggregates": {
+    "d0_index_in_backtest": 31,
+    "charge_kwh": {
+      "2": 6119356.1419431735,
+      "3": 6647718.729329923
+    },
+    "discharge_kwh": {
+      "2": 4957242.124948496,
+      "3": 5383199.375670892
+    },
+    "emergency_kwh": {
+      "2": 272838.0734750158,
+      "3": 41691.45237982135
+    },
+    "curtail_kwh": {
+      "2": 1914234.6566681482,
+      "3": 1266943.613841151
+    }
+  },
+  "price": {
+    "annex1_mean_yuan_per_kwh": 0.7661972222222223,
+    "annex4_full_mean_yuan_per_kwh": 0.7661976046423135,
+    "annex4_delivery_mean_yuan_per_kwh": 0.7575275199600799,
+    "annex4_min_yuan_per_kwh": 0.0076,
+    "annex4_max_yuan_per_kwh": 1.7936,
+    "per_slot_mean_max_abs_diff_vs_annex1": 5.150684931509719e-05
+  },
+  "notes": [
+    "payload 的 plan_cost_yuan / adjusted_cost_yuan 是【表1 模板行口径】；总费用与 natural_day_plan_cost_yuan + natural_day_adjust_cost_yuan + emergency_cost_yuan 是【自然日口径】，两者不同，不可混用。",
+    "natural_x / natural_q 首段取【前一日模板行末段】（跨日右移），sum(natural_x) 与 sum(x) 相差当日末段购电量。",
+    "SOC 轨迹 S 为自然日口径（S[:,0] = 当日 0:00 起点，等于 payload.soc_start_kwh），模板行与自然日在时段值上正好对齐。",
+    "费用口径均为附件4 实际电价结算，预测值只参与决策、不参与结算。",
+    "summary.daily 与 payload.days 两条日度序列逐字段完全一致（已核），可互替使用。",
+    "solver_sensitivity 两变体的基准值就是交付版 highs 解，故 highs-ds 的 gap 恒为 0，真正外部的算法对照只有 4-3 的 highs-ipm。"
+  ]
+}

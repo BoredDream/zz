@@ -1,0 +1,62 @@
+﻿check,max_abs_deviation
+[2] 明细电价 = 附件4 实际电价/kWh,0.0
+[2] 自然日电价右移一位自洽,0.0
+[2] natural_x 右移自洽/kWh,0.0
+[2] natural_q 右移自洽/kWh,0.0
+[2] q ≡ x（只在0:00决策）/kWh,0.0
+[2] 逐日总费用 vs payload,0.0
+[2] 交付期计划购电费 vs summary,0.0
+[2] 交付期调整相关费用 vs summary,0.0
+[2] 交付期紧急购电费 vs summary,0.0
+[2] 交付期总费用 vs summary,0.0
+[2] 交付期 emergency_kwh vs summary,2.3283064365386963e-10
+[2] 交付期 charge_kwh vs summary,5.587935447692871e-09
+[2] 交付期 discharge_kwh vs summary,4.6566128730773926e-09
+[2] 交付期 curtail_kwh vs summary,1.6298145055770874e-09
+[2] 交付期 adjust_up_kwh vs summary,0.0
+[2] 交付期 adjust_down_kwh vs summary,0.0
+[2] SOC 递推残差/kWh,0.0
+[2] 充电量超上限/kWh,0.0
+[2] 放电量超上限/kWh,0.0
+[2] SOC 低于下限/kWh,0.0
+[2] SOC 高于上限/kWh,0.0
+[2] 负数电量/kWh,0.0
+[2] 同时充放电/kWh,0.0
+[2] 首日初始 SOC 偏离 6000/kWh,0.0
+[2] 跨日 SOC 不连续/kWh,0.0
+[2] SOC 轨迹首列 ≠ S0/kWh,0.0
+[2] 能量平衡恒等式/kWh,2.2737367544323206e-13
+[3] 明细电价 = 附件4 实际电价/kWh,0.0
+[3] 自然日电价右移一位自洽,0.0
+[3] natural_x 右移自洽/kWh,0.0
+[3] natural_q 右移自洽/kWh,0.0
+[3] 逐日总费用 vs payload,0.0
+[3] 交付期计划购电费 vs summary,0.0
+[3] 交付期调整相关费用 vs summary,0.0
+[3] 交付期紧急购电费 vs summary,0.0
+[3] 交付期总费用 vs summary,0.0
+[3] 交付期 emergency_kwh vs summary,1.4551915228366852e-11
+[3] 交付期 charge_kwh vs summary,1.862645149230957e-09
+[3] 交付期 discharge_kwh vs summary,3.725290298461914e-09
+[3] 交付期 curtail_kwh vs summary,1.862645149230957e-09
+[3] 交付期 adjust_up_kwh vs summary,2.3283064365386963e-10
+[3] 交付期 adjust_down_kwh vs summary,5.820766091346741e-11
+[3] SOC 递推残差/kWh,0.0
+[3] 充电量超上限/kWh,0.0
+[3] 放电量超上限/kWh,0.0
+[3] SOC 低于下限/kWh,0.0
+[3] SOC 高于上限/kWh,0.0
+[3] 负数电量/kWh,2.9694291470150345e-12
+[3] 同时充放电/kWh,0.0
+[3] 首日初始 SOC 偏离 6000/kWh,0.0
+[3] 跨日 SOC 不连续/kWh,0.0
+[3] SOC 轨迹首列 ≠ S0/kWh,0.0
+[3] 能量平衡恒等式/kWh,0.0
+[3] 重放充电量 vs 明细/kWh,0.0
+[3] 重放放电量 vs 明细/kWh,0.0
+[3] 重放紧急购电 vs 明细/kWh,0.0
+[3] 重放弃电 vs 明细/kWh,0.0
+[3] 重放 SOC 轨迹 vs 明细/kWh,0.0
+failures_count,0
+checks_count,58
+realtime_replay_covered,3

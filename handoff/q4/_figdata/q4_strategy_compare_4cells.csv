@@ -1,0 +1,5 @@
+﻿cell,price_process,price_known,decision,total_cost_yuan,emergency_kwh,source
+确定电价×一次决策,deterministic,known,once,,,【待补：见第二问素材包 §D1】
+确定电价×四阶段滚动,deterministic,known,four_stage_rolling,13162682.885500716,,docs/q3_model.md + handoff/q3/_figdata/q3_meta.json（第三问主答案）
+波动电价×一次决策,volatile_attachment4,forecast,once,15202115.127496772,272838.07347501605,outputs/q4/summary_q4-2_K30.json#meta.totals
+波动电价×四阶段滚动,volatile_attachment4,forecast,four_stage_rolling,13847794.940061364,41691.452379821334,outputs/q4/summary_q4-3_K30.json#meta.totals
