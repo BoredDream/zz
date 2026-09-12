@@ -506,27 +506,64 @@ def fig3_3b(d) -> None:
 
 
 def fig3_4a(d) -> None:
+    """图 3-4a 四个典型日期的储电量轨迹（2×2 小面板）。
+
+    核心结论：
+        ① 四个日期的 SOC 轨迹**全部落在 1200–10800 kWh 运行边界内**；
+        ② 不同日期的日内充放电节奏明显不同（低谷深度、峰值平台、回充时刻各异）。
+
+    设计要点：
+        * 四个面板共用完全相同的 x/y 范围 —— 可直接横向比较轨迹形状；
+        * 每面板只画该日期的 1 条曲线（彻底消除四线重叠）；
+        * 运行下界 1200 / 上界 10800 以同款浅色虚线出现在每个面板，风格统一；
+        * 子图标题只写日期；图例不再需要（曲线与标题一一对应）。
+    """
     days = ["2025-03-20", "2025-06-21", "2025-09-23", "2025-12-21"]
-    styles = [(C_MAIN, "-", "o"), (C_MAIN_D, "--", "s"), (C_STATE, "-.", "^"), (C_ACT, ":", "D")]
-    fig, ax = plt.subplots(figsize=(7.1, 3.7))
-    style(ax)
-    ax.axhline(10800, color=C_STATE, lw=0.8, ls=":", zorder=Z_BASE)
-    ax.axhline(1200, color=C_STATE, lw=0.8, ls=":", zorder=Z_BASE)
-    for dt, (c, ls, mk) in zip(days, styles):
+    LINEC = C_MAIN                      # 单一主色：每天一板，无需多色区分
+    S_MIN, S_MAX = 1200.0, 10800.0
+    Y_LO, Y_HI = 350.0, 11400.0         # 统一 y 轴：下留 850、上留 600 kWh，使边界线内缩可辨
+
+    fig, axes = plt.subplots(2, 2, figsize=(7.1, 5.1),
+                             gridspec_kw=dict(hspace=0.34, wspace=0.16))
+    axes = axes.ravel()
+
+    for ax, dt in zip(axes, days):
+        style(ax)                                        # 去上/右边框 + 仅水平浅灰网格
         rows = sorted([r for r in d["targets"] if r["date"] == dt],
                       key=lambda r: int(r["t_template"]))
-        t = np.array([(int(r["t_template"]) + 0.5) / 6.0 for r in rows])
-        s = np.array([f(r["soc_end_kwh"]) for r in rows])
-        ax.plot(t, s, color=c, lw=1.35, ls=ls, marker=mk, ms=3.0, markevery=24,
-                markeredgewidth=0, label=dt, zorder=Z_DATA)
-    ax.set_xlabel("时刻 / h", fontsize=FS_LABEL, color=C_TEXT)
-    ax.set_ylabel("储电量 / kWh", fontsize=FS_LABEL, color=C_TEXT)
-    ax.set_ylim(600, 11600)
-    hour_ticks(ax)
-    note(ax, 24, 11040, "运行上界 10800", ha="right")
-    note(ax, 0, 11040, "运行下界 1200", ha="left")
-    ax.set_ylim(400, 11900)
-    legend(ax, loc="lower center", ncol=4, bbox_to_anchor=(0.5, -0.30))
+        assert len(rows) == 144, f"{dt} 段数应为 144，实得 {len(rows)}"
+        t = np.array([(int(r["t_template"]) + 0.5) / 6.0 for r in rows])   # 区间中点 → 小时
+        soc = np.array([f(r["soc_end_kwh"]) for r in rows])
+
+        # 运行边界（同款浅色虚线，逐面板一致）
+        ax.axhline(S_MIN, color=C_STATE, lw=0.8, ls=(0, (1.2, 1.8)),
+                   alpha=0.75, zorder=Z_BASE)
+        ax.axhline(S_MAX, color=C_STATE, lw=0.8, ls=(0, (1.2, 1.8)),
+                   alpha=0.75, zorder=Z_BASE)
+        # 轨迹
+        ax.plot(t, soc, color=LINEC, lw=1.45, zorder=Z_DATA)
+
+        # 统一坐标范围（要求：所有面板 x/y 范围相同）
+        ax.set_xlim(0, 24)
+        ax.set_ylim(Y_LO, Y_HI)
+        ax.set_xticks([0, 4, 8, 12, 16, 20, 24])
+        ax.set_yticks([2000, 4000, 6000, 8000, 10000])
+
+        # 子图标题：只写日期
+        ax.set_title(dt, fontsize=FS_PANEL, color=C_TEXT, pad=3.5, loc="left")
+
+    # 轴标题只在外侧出现，避免四份重复（要求 13 的"减少无意义重复"）
+    for ax in (axes[0], axes[2]):
+        ax.set_ylabel("储电量 / kWh", fontsize=FS_LABEL, color=C_TEXT)
+    for ax in (axes[2], axes[3]):
+        ax.set_xlabel("时刻 / h", fontsize=FS_LABEL, color=C_TEXT)
+
+    # 边界说明在图级别出现一次（置于图底，绝不压曲线，风格统一）
+    fig.subplots_adjust(bottom=0.155)
+    fig.text(0.5, 0.012,
+             "虚线为运行边界 1200 / 10800 kWh：四个日期全部时段均未越界",
+             ha="center", va="bottom", fontsize=FS_NOTE, color=C_STATE)
+
     save(fig, "fig3_4a_soc_trajectory")
 
 
