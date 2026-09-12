@@ -134,7 +134,7 @@ def style(ax, grid_axis="y", grid=True):
         ax.spines[s].set_linewidth(0.7)
         ax.spines[s].set_color(C_SPINE)
     if grid:
-        ax.grid(axis=grid_axis, color=C_GRID, lw=0.5, alpha=0.30)
+        ax.grid(axis=grid_axis, color=C_GRID, lw=0.5, alpha=0.22)
         ax.set_axisbelow(True)
     return ax
 
