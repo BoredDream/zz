@@ -57,6 +57,20 @@ def load_comparison() -> dict:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_solver() -> dict | None:
+    """第 8.1 节的求解器检验结果，由 scripts/q3_solver_uniqueness_check.py 生成。
+
+    产物缺失时返回 None，报告退化为一句「未运行」提示——不阻塞其余章节。
+    """
+    need = {"alt_ds": "solver_sensitivity_highs-ds.json",
+            "alt_ipm": "solver_sensitivity_highs-ipm.json",
+            "census": "solver_degeneracy_census.json"}
+    paths = {k: OUT / v for k, v in need.items()}
+    if not all(p.exists() for p in paths.values()):
+        return None
+    return {k: json.loads(p.read_text(encoding="utf-8")) for k, p in paths.items()}
+
+
 def invariants(detail, payload) -> dict[str, float]:
     """重算物理不变量，供报告第 7 节引用（与 validate_q3_multistage.py 相互独立地再算一遍）。"""
     x,q,z,c,g,w,S=(detail[k] for k in ("x","q","z","c","g","w","S"))
@@ -271,9 +285,106 @@ def comparison(c: dict) -> list[str]:
     return L
 
 
+def solver_section(s: dict | None, by: dict) -> list[str]:
+    """第 8.1 节：求解器退化与配置敏感性。s 为 None 时只给提示。
+
+    `by` 是主答案的 {日期: 当日记录}，只用来给出最差日的费用量级作参照。
+    """
+    L: list[str] = []
+    A, X = L.append, L.extend
+    A("### 8.1 求解器退化与配置敏感性")
+    A("")
+    if s is None:
+        A("**未运行。** 跑 `scripts/q3_solver_uniqueness_check.py alt <method>`（整年对照）"
+          "与 `... census`（LP 级普查）后重新生成本报告，本节会自动填充。")
+        A("")
+        return L
+
+    ds, ip, cen = s["alt_ds"], s["alt_ipm"], s["census"]
+    ref = ds["reference_total_cost_yuan"]
+    A("旧模型曾实测「目标函数一字不改、只换求解算法，年度总费用可差约 0.226%」。"
+      "本节在**现行模型**上重做该检验，脚本 `scripts/q3_solver_uniqueness_check.py`。")
+    A("")
+    A("该脚本不修改 `src/`：现行代码写的是 `linprog(c, ..., method='highs')`，"
+      "`method` 是关键字参数，因此脚本通过替换模块命名空间里的 `linprog` "
+      "名字来换算法，主答案路径一字未动。")
+    A("")
+    A("**（1）整年端到端对照**（334 天交付期，其余口径与主答案完全一致）：")
+    A("")
+    A("| 算法 | 交付期总费用/元 | 与主答案之差/元 | 逐日最大偏差/元 | 偏差 > 1 元的天数 |")
+    A("|---|---:|---:|---:|---:|")
+    A(f"| `highs`（主答案所用） | {ref:,.4f} | — | — | — |")
+    A(f"| `highs-ds`（对偶单纯形） | {ds['alt_total_cost_yuan']:,.4f} | "
+      f"**{ds['total_gap_yuan']:,.4f}** | {ds['max_abs_daily_gap_yuan']:,.4f} | "
+      f"{ds['days_with_gap_over_1yuan']} |")
+    A(f"| `highs-ipm`（内点法） | {ip['alt_total_cost_yuan']:,.4f} | "
+      f"**{ip['total_gap_yuan']:,.4f}**（{ip['total_gap_pct']:+.6f}%） | "
+      f"{ip['max_abs_daily_gap_yuan']:,.4f}（{ip['worst_day']}） | "
+      f"{ip['days_with_gap_over_1yuan']} |")
+    A("")
+    wd = ip["worst_day"]
+    wd_cost = by.get(wd, {}).get("total_cost_yuan")
+    wd_note = (f"（{wd}，该日总费用 {wd_cost:,.2f} 元，即单日 "
+               f"{100.0 * ip['max_abs_daily_gap_yuan'] / wd_cost:.2f}%）"
+               if wd_cost else f"（{wd}）")
+    A("`highs-ds` 与主答案**逐位相同**（逐日费用、334 天合计均为 0 偏差）。"
+      f"`highs-ipm` 的总费用低 {abs(ip['total_gap_yuan']):,.2f} 元，"
+      f"相对偏差 **{ip['total_gap_pct']:+.6f}%**；"
+      f"偏差分散在 {ip['days_with_gap_over_1yuan']} 天上，"
+      f"单日最大 {ip['max_abs_daily_gap_yuan']:,.2f} 元{wd_note}。")
+    A("")
+    ov, per_stage = cen["overall"], cen["by_stage"]
+    n_ds = sum(per_stage[k]["highs-ds"]["n_solution_differs"] for k in per_stage)
+    n_ip = sum(per_stage[k]["highs-ipm"]["n_solution_differs"] for k in per_stage)
+    A(f"**（2）LP 级普查**（{cen['lps']} 个发布 LP，各用 3 种算法重解）：")
+    A("")
+    A("| 指标 | 数值 |")
+    A("|---|---:|")
+    A(f"| 覆盖 LP 数 | {cen['lps']} |")
+    A(f"| 最优值最大相对偏差（跨算法） | {ov['max_rel_obj_gap_across_methods']:.2e} |")
+    A(f"| 最优**值**相对偏差 > 1e-9 的 LP | {ov['n_lps_obj_gap_gt_1e-9']} |")
+    A(f"| 最优**解向量**不同的 (LP, 备选算法) 对 | "
+      f"{ov['n_lp_method_pairs_solution_differs']} / {ov['n_lp_method_pairs']}"
+      f"（{100.0 * ov['n_lp_method_pairs_solution_differs'] / ov['n_lp_method_pairs']:.1f}%） |")
+    A(f"| ├ 其中 `highs-ds` | {n_ds} / {cen['lps']} |")
+    A(f"| └ 其中 `highs-ipm` | {n_ip} / {cen['lps']} |")
+    A(f"| 目标系数加 {cen['jitter_rel']:g} 相对扰动后解向量不同 | "
+      f"{ov['jitter_n_solution_differs']} / {ov['jitter_n']} |")
+    A("")
+    A("**结论：**")
+    A("")
+    A("1. **现行模型不存在旧模型那种「换算法年度费用差 0.226%」的配置敏感性。** "
+      f"约束与目标不变时，{cen['lps']} 个 LP 的最优值跨算法一致到 "
+      f"{ov['max_rel_obj_gap_across_methods']:.2e} 相对量级，无一个超过 1e-9；"
+      f"端到端也只有内点法产生 {abs(ip['total_gap_yuan']):,.2f} 元的偏差。"
+      f"主答案 {ref:,.4f} 元**不是**求解器配置的伪影。")
+    A("2. **但 LP 确实普遍退化（最优解不唯一）。** "
+      f"{100.0 * ov['n_lp_method_pairs_solution_differs'] / ov['n_lp_method_pairs']:.1f}% 的 "
+      "(LP, 算法) 对给出不同的最优解向量——内点法返回最优面上的相对内点，"
+      "与单纯形法给出的顶点不同；`highs` 与 `highs-ds` 则完全一致。"
+      "这与旧模型实测的 41.9% 退化率量级相符，**但两者分母不同**"
+      "（旧模型按发布时刻统计，本表按 (LP, 算法) 对统计），不可直接比较。")
+    A("3. **方法学注意**：普查比较的是**完整 LP 解向量**，而模型只取前缀 `r.x[:nD]` "
+      "作为实际决策（其余为情景 recourse 变量）。因此上表「解向量不同」一栏描述的是 "
+      "LP 的退化程度，**不等于**决策层面的不唯一率。决策层面的影响由第（1）项的"
+      "端到端对照界定：即便近半数 LP 的解向量不同，334 天总费用仍只差 "
+      f"{abs(ip['total_gap_yuan']):,.2f} 元。")
+    n_days = cen["lps"] // len(cen["stages"])
+    A(f"4. 脚本的 `census` 模式本意是「按步长抽样 {cen['sampled_days']} 天」，"
+      f"但 `backtest` 的调用会求解 `[起, 止)` 区间内的**每一天**，因此实际普查的是 "
+      f"2025-02-01 起连续 **{n_days} 天**的全部 {cen['lps']} 个发布 LP，"
+      "比原打算的抽样覆盖更广、结论更强（代价：单次约 31 分钟）。")
+    A("")
+    A("**产物**：`outputs/q3_multistage/solver_sensitivity_highs-ds.json`、"
+      "`solver_sensitivity_highs-ipm.json`、`solver_degeneracy_census.json`。")
+    A("")
+    return L
+
+
 def main() -> int:
     payload, detail, by = load()
     comp = load_comparison()
+    solver = load_solver()
     t = payload["meta"]["totals"]
     per = payload["meta"]["delivery_period"]
     w = invariants(detail, payload)
@@ -420,6 +531,7 @@ def main() -> int:
       "而紧急购电补的是同一时段的功率缺口。因实时层是贪心规则（第 1 节），"
       "两者可以并存。")
     A("")
+    X(solver_section(solver, by))
     A("## 9. 尚存限制")
     A("")
     A("1. **八组合对照已补齐，但结论是模型内条件结论。** 第 4 节的对照在现行模型上"
@@ -428,10 +540,13 @@ def main() -> int:
       "旧模型那版同题对照（见 `reports/_archive/q3_report.md` 第 2 节）数字仍全部失效、不可引用。"
       "仍需注意第 4.3 节列出的适用范围：节省是同一 SAA 情景与同一 `λ` 下的模型内比较，"
       "换预测器或换情景数都会改变具体数值。")
-    A("2. **本模型尚未做独立复核。** 旧模型曾有两轮独立复核（退款口径 8 组合复算、"
-      "主口径最优解唯一性检验，见 `reports/_archive/q3_refund_verification.md` 与 "
-      "`reports/_archive/q3_uniqueness_check.md`）。现行模型**没有**同等强度的复核，"
-      "论文引用前需补做或降级表述。")
+    A("2. **求解器检验已补做，但独立复核仍未做。** 旧模型曾有两轮独立复核"
+      "（退款口径 8 组合复算、主口径最优解唯一性检验，见 "
+      "`reports/_archive/q3_refund_verification.md` 与 `reports/_archive/q3_uniqueness_check.md`）。"
+      "现行模型现已补上第 8.1 节的求解器退化与配置敏感性检验"
+      "（结论：换算法不改变最优值，端到端差 0.0002%；但 LP 普遍退化、最优解不唯一），"
+      "**仍未做**独立于 `src/q3_multistage.py` 的第二套实现复算——"
+      "`scripts/validate_q3_multistage.py` 验证的是「编码与已验收产物自洽」，不是第三方复算。")
     A("3. 0:00 计划没有用完整情景树联合定价未来 6/12/18 时的信息到达与调整机会，"
       "属于滚动两阶段近似；`strict_multistage_optimal=false`，**不宣称严格多阶段随机最优**。")
     A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"

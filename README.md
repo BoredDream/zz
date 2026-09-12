@@ -21,6 +21,7 @@
 - `scripts/assemble_q3_stage_comparison.py`：汇总八种预报发布组合，输出条件边际与 Shapley 分摊。
 - `scripts/build_result3_multistage.mjs`：用官方附件5模板生成第三问 `result3.xlsx`。
 - `scripts/validate_q3_multistage.py`：第三问独立验收（物理约束、费用口径恒等、工作簿逐格对账）。
+- `scripts/q3_solver_uniqueness_check.py`：第三问求解器退化与配置敏感性检验（整年换算法对照 + LP 级普查）；不修改 `src/`。
 - `outputs/q3_multistage/`：第三问正式工作簿与结果。
 - `docs/q4_model.md`：**第四问正式模型**（波动电价）的定义——电价两因子预测（形态×水平×日内AR(1)）、价格/负载/光伏同日配对的联合场景生成、价格加权分位数、变体 4-2/4-3 的差异。
 - `src/q4_solver.py`：第四问求解器，复用第三问的时间网格、母线侧储能口径、实时层与结算口径，替换电价部分。
@@ -103,7 +104,7 @@ $env:PYTHONPATH="src"
 node scripts\build_result3_multistage.mjs 0123 30                              # 生成 result3.xlsx
 .\.venv\Scripts\python.exe -X utf8 scripts\validate_q3_multistage.py 0123 30   # 独立验收
 
-# 预报发布时刻组合对照（题面第二小问）：八种组合各跑一次，再汇总
+# 预报发布时刻组合对照（题面问题3 第二段末句）：八种组合各跑一次，再汇总
 .\.venv\Scripts\python.exe -X utf8 scripts\export_q3_multistage.py 30 0        # 以及 0,1 / 0,2 / 0,3 / …
 .\.venv\Scripts\python.exe -X utf8 scripts\assemble_q3_stage_comparison.py     # -> q3_stage_comparison.{json,csv}
 .\.venv\Scripts\python.exe -X utf8 scripts\report_q3_multistage.py             # 重生成 q3_report.md
@@ -111,6 +112,17 @@ node scripts\build_result3_multistage.mjs 0123 30                              #
 
 组合对照的锁定口径：某发布时刻被禁用时，上一次启用的发布时刻负责到**下一次实际启用
 的时刻**为止（见 `docs/q3_multistage_model.md` 第 1.1 节），不能沿用固定 6 小时块。
+
+### 求解器退化与配置敏感性检验
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_solver_uniqueness_check.py alt highs-ds    # 整年改用对偶单纯形，约 371 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_solver_uniqueness_check.py alt highs-ipm   # 整年改用内点法，约 879 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_solver_uniqueness_check.py census 8        # LP 级退化普查，约 31 分钟
+```
+
+该脚本**不修改 `src/`**：模型用 `linprog(..., method='highs')` 调用，`method` 是关键字
+参数，脚本替换模块命名空间里的 `linprog` 名字即可换算法。结论见报告第 8.1 节。
 
 模型定义见 `docs/q3_multistage_model.md`，输出位于 `outputs/q3_multistage/`。
 计划/调整表保留模板行（`t=0`覆盖0:10–0:20，`t=143`覆盖次日0:00–0:10）；
