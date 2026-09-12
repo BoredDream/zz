@@ -23,6 +23,7 @@
 - `scripts/validate_q3_multistage.py`：第三问独立验收（物理约束、费用口径恒等、工作簿逐格对账）。
 - `scripts/q3_solver_uniqueness_check.py`：第三问求解器退化与配置敏感性检验（整年换算法对照 + LP 级普查）；不修改 `src/`。
 - `scripts/verify_q3_multistage.py`：第三问独立复算（第二套实现，不 import 模型；从原始附件重算结算、储能轨迹与八组合）。
+- `scripts/q3_lambda_sensitivity.py`：第三问终端储能价值 λ 的全年敏感性扫描（替换模块内 `lam` 默认值，`src/` 未改动）。
 - `outputs/q3_multistage/`：第三问正式工作簿与结果。
 - `docs/q4_model.md`：**第四问正式模型**（波动电价）的定义——电价两因子预测（形态×水平×日内AR(1)）、价格/负载/光伏同日配对的联合场景生成、价格加权分位数、变体 4-2/4-3 的差异。
 - `src/q4_solver.py`：第四问求解器，复用第三问的时间网格、母线侧储能口径、实时层与结算口径，替换电价部分。
@@ -134,6 +135,19 @@ node scripts\build_result3_multistage.mjs 0123 30                              #
 该脚本**不 import `src/q3_multistage.py`**：只读原始附件 1/2 的 xlsx 与已落盘明细 npz，
 按题面公式与 README「固定口径」从零重算结算费用、实时层与储能轨迹，并独立重算八组合
 与 Shapley 分摊；偏差应为 0.000e+00。它**不重解任何 LP**。结论见报告第 8.2 节。
+
+### 终端储能价值 λ 的敏感性扫描
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_lambda_sensitivity.py run 0.0     # 每个 λ 一次，约 400 s
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_lambda_sensitivity.py run 0.478   # 主答案值（自检点）
+.\.venv\Scripts\python.exe -X utf8 scripts\q3_lambda_sensitivity.py assemble    # -> lambda_sensitivity_K30.json
+```
+
+`run` 一次只跑一个 λ，可多进程并行（7 个并行 ≈ 7 分钟）。该脚本**不修改 `src/`**：
+只替换模块命名空间里的 `stage_lp` / `stage0_lp_145` 两个名字，把 `lam` 默认值换掉。
+λ = 0.478 那一次应与 `summary_stages0123_K30.json` 逐位相同（`assemble` 会检查）。
+结论见报告第 8.3 节。
 
 模型定义见 `docs/q3_multistage_model.md`，输出位于 `outputs/q3_multistage/`。
 计划/调整表保留模板行（`t=0`覆盖0:10–0:20，`t=143`覆盖次日0:00–0:10）；

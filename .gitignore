@@ -33,3 +33,7 @@ outputs/q3_multistage/payload_stages03_K30.json
 outputs/q3_multistage/payload_stages012_K30.json
 outputs/q3_multistage/payload_stages013_K30.json
 outputs/q3_multistage/payload_stages023_K30.json
+
+# λ 扫描的单点明细：每点可由 scripts/q3_lambda_sensitivity.py run <λ> 重算（约 400 s），
+# 不入库——报告与契约所需的全部数字都在 lambda_sensitivity_K30.json 里。
+outputs/q3_multistage/lambda_scan/

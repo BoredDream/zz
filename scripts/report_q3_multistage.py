@@ -82,6 +82,17 @@ def load_independent() -> dict | None:
     return json.loads(path.read_text(encoding="utf-8"))
 
 
+def load_lambda() -> dict | None:
+    """第 8.3 节的终端价值 λ 敏感性扫描，由 scripts/q3_lambda_sensitivity.py 生成。
+
+    产物缺失时返回 None，报告退化为一句「未运行」提示——不阻塞其余章节。
+    """
+    path = OUT / f"lambda_sensitivity_K{K}.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def invariants(detail, payload) -> dict[str, float]:
     """重算物理不变量，供报告第 7 节引用（与 validate_q3_multistage.py 相互独立地再算一遍）。"""
     x,q,z,c,g,w,S=(detail[k] for k in ("x","q","z","c","g","w","S"))
@@ -457,11 +468,163 @@ def independent_section(v: dict | None) -> list[str]:
     return L
 
 
+# λ 扫描中「低水位运行」与「高水位运行」两套机制的分界区间。切换点被夹在
+# (LO_REGIME_MAX, HI_REGIME_MIN) 内：0.3585 仍在低机制，0.478 已跳到高机制。
+LO_REGIME_MAX = 0.3585
+HI_REGIME_MIN = 0.478
+
+
+def lambda_section(v: dict | None) -> list[str]:
+    """第 8.3 节：终端储能价值 λ 的全年敏感性扫描。v 为 None 时只给提示。"""
+    L: list[str] = []
+    A = L.append
+    A("### 8.3 终端储能价值 λ 的全年敏感性扫描")
+    A("")
+    if v is None:
+        A("**未运行。** 跑 `scripts/q3_lambda_sensitivity.py run <λ>` 若干次后执行 "
+          "`... assemble`，重新生成本报告，本节会自动填充。")
+        A("")
+        return L
+
+    meta, scan, rng = v["meta"], v["scan"], v["range"]
+    chk = v["baseline_reproduction_check"]
+    refv = meta["reference_values"]
+    base = next((r for r in scan if abs(r["lam"] - meta["baseline_lam"]) < 1e-12), None)
+    A(f"终端储能价值 `λ` 写在 `stage_lp` 与 `stage0_lp_145` 的目标函数里，是**每个阶段 LP "
+      f"视界末端**最后一时段的 `−λ/K`。因为阶段每天滚动，它实际是**逐日**末端水价："
+      f"每天都用它给「当天结束时剩下的电」定价，故影响全部 {meta['delivery_days']} 天。")
+    A("")
+    A(f"`λ = {meta['baseline_lam']}` 取自 `p_谷/η`（谷价 {refv['p_valley_over_eta'] * M.ETA:.4f} "
+      f"元/kWh ÷ η = {refv['p_valley_over_eta']:.4f}）。它**不是**由最优性推导出来的常数，"
+      f"所以必须回答「换一个 λ，答案变多少」。")
+    A("")
+    A("**做法**：不修改 `src/` —— 只替换模块命名空间里的 `stage_lp` / `stage0_lp_145` 两个名字，"
+      f"把 `lam` 默认值换成扫描值，`alpha` 与 `commit_end` 原样透传（与第 8.1 节替换 `linprog` "
+      f"是同一手法）。{meta['points']} 个 λ 各跑一次全年回测"
+      f"（`K={meta['K']}`、`stages=0,1,2,3`、`S0={meta['S0']:.0f}`）。")
+    A("")
+    if chk.get("rerun_matches_delivered") is not None:
+        ok = chk["rerun_matches_delivered"]
+        A(f"**补丁自检**：λ = {meta['baseline_lam']} 那一次重跑的交付期总费用为 "
+          f"{f(chk['rerun_total_cost_yuan'])} 元，与已交付的 "
+          f"`summary_stages0123_K30.json`（{f(chk['delivered_total_cost_yuan'])} 元）相差 "
+          f"**{chk['abs_gap_yuan']:.3e} 元** —— "
+          f"{'逐位复现，说明换 λ 的补丁机制本身没有改变模型。' if ok else '⚠️ 未能复现，扫描结果不可用。'}")
+        A("")
+    A("| λ | λ/λ₀ | 交付期总费用/元 | 与主答案之差/元 | 差/% | 交付期期初 SOC/kWh | "
+      "交付期末 SOC/kWh | 日均日末 SOC/kWh | 紧急购电量/kWh | 弃电量/kWh | 充电量/kWh | 放电量/kWh |")
+    A("|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|---:|")
+    for r in scan:
+        star = " **(主答案)**" if abs(r["lam"] - meta["baseline_lam"]) < 1e-12 else ""
+        A(f"| {r['lam']:.4f}{star} | {r['lam_over_baseline']:.3f} | {f(r['total_cost_yuan'])} | "
+          f"{'+' if (r['delta_vs_baseline_yuan'] or 0) > 0 else ''}{f(r['delta_vs_baseline_yuan'] or 0.0)} | "
+          f"{'+' if (r['delta_pct'] or 0) > 0 else ''}{(r['delta_pct'] or 0.0):.4f} | "
+          f"{f(r['soc_start_delivery_kwh'])} | {f(r['soc_end_delivery_kwh'])} | "
+          f"{f(r['soc_end_mean_daily_kwh'])} | {f(r['emergency_kwh'])} | {f(r['curtail_kwh'])} | "
+          f"{f(r['charge_kwh'])} | {f(r['discharge_kwh'])} |")
+    A("")
+    A(f"扫描区间 λ ∈ [{scan[0]['lam']:.4f}, {scan[-1]['lam']:.4f}]（正文主答案的 0—3 倍），"
+      f"交付期总费用在 **{f(rng['min_cost']['total_cost_yuan'])} 元**"
+      f"（λ={rng['min_cost']['lam']:.4f}）与 **{f(rng['max_cost']['total_cost_yuan'])} 元**"
+      f"（λ={rng['max_cost']['lam']:.4f}）之间，极差 **{f(rng['spread_yuan'])} 元"
+      f"（主答案的 {rng['spread_pct_of_baseline']:.2f}%）**。")
+    A("")
+    # 机制切换被夹在 λ ∈ (0.3585, 0.478) 内：据此把扫描点分成低/高两套机制。
+    lo_pts = [r for r in scan if r["lam"] <= LO_REGIME_MAX + 1e-9]
+    hi_pts = [r for r in scan if r["lam"] >= HI_REGIME_MIN - 1e-9]
+    assert lo_pts and hi_pts and len(lo_pts) + len(hi_pts) == len(scan), "机制分组未覆盖全部扫描点"
+    b = (base or rng["min_cost"])["total_cost_yuan"]
+    A("**发现 1｜量级上不敏感。** 即使把 λ 换成 3 倍（1.4340），交付期总费用也只高 "
+      f"{f(rng['max_cost']['total_cost_yuan'] - b)} 元"
+      f"（{(rng['max_cost']['total_cost_yuan'] / b - 1) * 100:.3f}%）；"
+      f"整个 0—3 倍区间的极差是 {f(rng['spread_yuan'])} 元（{rng['spread_pct_of_baseline']:.2f}%）。"
+      "**⇒ 主答案 13,162,682.89 元不是 λ 取值的伪影。**")
+    A("")
+    A("**发现 2｜但存在一个运行机制切换点。** 费用并非随 λ 单调"
+      f"（`costs_monotone_in_lam = {rng['costs_monotone_in_lam']}`），"
+      "原因是储能的运行方式在 λ ≈ 0.36—0.48 之间整体换了一套：")
+    A("")
+    A(f"- **低 λ 机制**（λ ≤ 0.3585，{len(lo_pts)} 个点）：储能全年基本空转在低位 —— "
+      f"交付期期初 SOC 仅 {f(lo_pts[0]['soc_start_delivery_kwh'])}—"
+      f"{f(lo_pts[-1]['soc_start_delivery_kwh'])} kWh、日均日末 SOC "
+      f"{f(min(r['soc_end_mean_daily_kwh'] for r in lo_pts))}—"
+      f"{f(max(r['soc_end_mean_daily_kwh'] for r in lo_pts))} kWh，"
+      f"紧急购电 {f(min(r['emergency_kwh'] for r in lo_pts))}—"
+      f"{f(max(r['emergency_kwh'] for r in lo_pts))} kWh；")
+    A(f"- **高 λ 机制**（λ ≥ 0.478，{len(hi_pts)} 个点）：储能被顶在高位 —— "
+      f"期初 SOC {f(min(r['soc_start_delivery_kwh'] for r in hi_pts))}—"
+      f"{f(max(r['soc_start_delivery_kwh'] for r in hi_pts))} kWh、日均日末 SOC "
+      f"{f(min(r['soc_end_mean_daily_kwh'] for r in hi_pts))}—"
+      f"{f(max(r['soc_end_mean_daily_kwh'] for r in hi_pts))} kWh，"
+      f"紧急购电反而降到 {f(min(r['emergency_kwh'] for r in hi_pts))}—"
+      f"{f(max(r['emergency_kwh'] for r in hi_pts))} kWh，"
+      f"但年充/放电量各多约 {f(hi_pts[0]['charge_kwh'] - lo_pts[-1]['charge_kwh'])} kWh。")
+    A("")
+    A(f"交付所用的 λ = {meta['baseline_lam']} **正好落在切换点右侧**（期初 SOC 从 1,594.4 kWh "
+      f"跳到 9,284.9 kWh），这是本节最需要写进论文的一条："
+      "**主答案所在的机制是「每天把电池充满了再放掉」，而不是「电池基本不动」。**")
+    A("")
+    A("**发现 3｜费用在每套机制内部单调，整体呈 V 形。** 低机制内随 λ 上升而降"
+      f"（{f(lo_pts[0]['total_cost_yuan'])} → {f(lo_pts[-1]['total_cost_yuan'])} 元），"
+      f"高机制内随 λ 上升而升（{f(hi_pts[0]['total_cost_yuan'])} → "
+      f"{f(hi_pts[-1]['total_cost_yuan'])} 元）。全区间最小值出现在 λ = "
+      f"{rng['min_cost']['lam']:.4f}：{f(rng['min_cost']['total_cost_yuan'])} 元，"
+      f"比主答案低 {f(abs(rng['min_cost']['total_cost_yuan'] - (base or rng['min_cost'])['total_cost_yuan']))} 元"
+      f"（{(rng['min_cost']['total_cost_yuan'] / (base or rng['min_cost'])['total_cost_yuan'] - 1) * 100:.4f}%）。")
+    A("")
+    A("**发现 4｜这 8,129.90 元不能读成「λ = 0.3585 更优」。** 低机制进入交付期时电池里"
+      f"只存了 {f(lo_pts[-1]['soc_start_delivery_kwh'])} kWh，比高机制少 "
+      f"{f(hi_pts[0]['soc_start_delivery_kwh'] - lo_pts[-1]['soc_start_delivery_kwh'])} kWh —— "
+      "这部分差额是 2025-01 那 31 天预热期的积累/消耗，**不属于交付期**。"
+      f"按 λ = {meta['baseline_lam']} 计价，它约值 "
+      f"{f(meta['baseline_lam'] * (hi_pts[0]['soc_start_delivery_kwh'] - lo_pts[-1]['soc_start_delivery_kwh']))} 元。"
+      "所以 V 形底部相对主答案的那点优势里，有一部分只是**存量转移**而非效率差。")
+    A("")
+    A("**⇒ 论文里可以写的表述**：主答案在 λ 取 0—3 倍的范围内，交付期现金费用极差 "
+      f"{rng['spread_pct_of_baseline']:.2f}%，且各机制内部单调；"
+      "**不能说某个 λ「更优」**，只能说该常数的影响被限定在 1% 以内，"
+      "但它决定了模型落在两套截然不同的储能运行方式中的哪一套。")
+    A("")
+    e0, e1 = hi_pts[0], lo_pts[-1]
+    cur_hi = [r["curtail_kwh"] for r in hi_pts]
+    cur_lo = [r["curtail_kwh"] for r in lo_pts]
+    A("**发现 5｜λ 同时是「解不唯一」的另一个侧面。** 切换点两侧（λ = 0.4780 与 0.3585）"
+      f"的年度费用只差 {f(e0['total_cost_yuan'] - e1['total_cost_yuan'])} 元（"
+      f"{(e0['total_cost_yuan'] / e1['total_cost_yuan'] - 1) * 100:.4f}%），"
+      f"但物理计划差别巨大：紧急购电相差 {f(abs(e0['emergency_kwh'] - e1['emergency_kwh']))} kWh、"
+      f"弃电相差 {f(min(cur_hi) - max(cur_lo))}—{f(max(cur_hi) - min(cur_lo))} kWh、"
+      f"充电量相差 {f(e0['charge_kwh'] - e1['charge_kwh'])} kWh、"
+      f"放电量相差 {f(e0['discharge_kwh'] - e1['discharge_kwh'])} kWh。"
+      "这与第 8.1 节的「LP 普遍退化、最优解不唯一」"
+      "是同一件事的两个侧面：**费用面很平，策略面不平。**")
+    A("")
+    A("**本节没有覆盖什么**（引用时必须保留）：")
+    A("")
+    A("1. **只动了 λ，没有重跑八组合对照。** 「引入 6:00/12:00/18:00 预报的价值」"
+      "是否随 λ 变化**未测**；第 4 节的节省数字仍是 λ = 0.478 下的结果。")
+    A("2. **λ 仍是外生常数。** 本扫描说明的是「答案对这个常数的依赖程度」，"
+      "**不是「λ 应当取多少」**——λ 的最优值需要联立次日凌晨的负荷与紧急电价风险才能定，"
+      "本模型没有内生它。")
+    A("3. **切换点只被夹在 λ ∈ (0.3585, 0.478) 内**，未做更细的二分定位。")
+    A("4. **其余 λ 点未做独立复算**：第 8.2 节的复算只针对 λ = 0.478 那一条决策轨迹。")
+    A("5. 表中「交付期期初 SOC」即 2025-01-31 24:00 的储电量，是跨 λ 比较现金费用时"
+      "必须一起看的量（见发现 4）；本表未对期初存量做任何折算，"
+      f"`lambda_sensitivity_K{meta['K']}.json` 里另存的 `cost_net_of_storage_change_yuan`"
+      "只扣交付期内净变化（各点几乎相同，约 −330—−380 kWh），**不能**消除期初存量差异。")
+    A("")
+    A(f"**产物**：`outputs/q3_multistage/lambda_sensitivity_K{meta['K']}.json` 与 "
+      f"`outputs/q3_multistage/lambda_scan/`（每点一份）；"
+      f"脚本 `scripts/q3_lambda_sensitivity.py`。")
+    A("")
+    return L
+
+
 def main() -> int:
     payload, detail, by = load()
     comp = load_comparison()
     solver = load_solver()
     indep = load_independent()
+    lam = load_lambda()
     t = payload["meta"]["totals"]
     per = payload["meta"]["delivery_period"]
     w = invariants(detail, payload)
@@ -610,6 +773,7 @@ def main() -> int:
     A("")
     X(solver_section(solver, by))
     X(independent_section(indep))
+    X(lambda_section(lam))
     A("## 9. 尚存限制")
     A("")
     A("1. **八组合对照已补齐，但结论是模型内条件结论。** 第 4 节的对照在现行模型上"
@@ -628,8 +792,23 @@ def main() -> int:
       "这些假设；③ `result3.xlsx` 未被直接重算（见第 8.2 节末列出的 6 条）。")
     A("3. 0:00 计划没有用完整情景树联合定价未来 6/12/18 时的信息到达与调整机会，"
       "属于滚动两阶段近似；`strict_multistage_optimal=false`，**不宣称严格多阶段随机最优**。")
-    A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"
-      "该系数不是由最优性推导唯一确定；未做全年敏感性扫描。")
+    if lam is not None:
+        _rng, _scan = lam["range"], lam["scan"]
+        _lo = min(_scan, key=lambda r: r["total_cost_yuan"])
+        _hi = max(_scan, key=lambda r: r["total_cost_yuan"])
+        A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"
+          f"该系数不是由最优性推导唯一确定。**全年敏感性扫描已补做**（第 8.3 节）："
+          f"λ 取 0—3 倍（{_scan[0]['lam']:.4f}—{_scan[-1]['lam']:.4f}）时，交付期总费用在 "
+          f"{f(_lo['total_cost_yuan'])} 元（λ={_lo['lam']:.4f}）与 "
+          f"{f(_hi['total_cost_yuan'])} 元（λ={_hi['lam']:.4f}）之间，"
+          f"极差 {f(_rng['spread_yuan'])} 元（{_rng['spread_pct_of_baseline']:.2f}%），"
+          f"故主答案的量级不是 λ 的伪影；但费用对 λ **非单调** —— "
+          f"λ ≈ 0.36—0.48 之间存在储能运行机制的切换（低水位 vs 高水位），"
+          f"交付所用的 λ = {M.LAM} 正好在切换点右侧。"
+          f"该扫描**未重跑八组合对照**、**未内生求解 λ**，切换点也未做更细定位。")
+    else:
+        A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"
+          "该系数不是由最优性推导唯一确定；全年敏感性扫描见第 8.3 节。")
     A("5. 实时层为贪心规则而非滚动 LP 最优（见第 1 节）。")
     A("6. 附件3只给整点光伏预报，10分钟值采用以发布时刻为锚点的PCHIP保形插值；"
       "0:00锚点使用上一已完成区间，其他发布时刻使用当时可测量值。附件未提供负荷预报，"
