@@ -1,0 +1,15 @@
+﻿图文件,图题,数据来源文件,用到的列,行数/规模,图型,已产出格式
+fig3_1a_system_profile,图 3-1a 日内电价与净负荷形态,q3_hourly_profile.csv,hour; price_yuan_per_kwh; net_load_kw,24 行,折线（上下双面板）,pdf+png+svg
+fig3_1b_forecast_accuracy,图 3-1b 光伏预报精度对比,docs/q3_multistage_model.md §5,0:00 发布 543→355 kW；6:00 284；12:00 188,3 个标定值 + 1 个缺失项,分组柱,pdf+png+svg
+fig3_2a_adjust_overview,图 3-2a 各日合约量调整量,q3_daily_metrics.csv,date; adjust_up_kwh; adjust_down_kwh,334 行,双向柱,pdf+png+svg
+fig3_2b_plan_vs_final,图 3-2b 计划购电量与最终合约量,q3_target_days_interval.csv,date; t_template; plan_kwh; natural_final_kwh; price_yuan_per_kwh,2 日 × 144 段 + 电价,step 折线（三面板）,pdf+png+svg
+fig3_3a_monthly_cost,图 3-3a 月度费用构成与弃电量,q3_monthly_summary.csv,month; plan_cost_yuan; adjust_cost_yuan; emergency_cost_yuan; curtail_kwh,11 行,堆叠柱 + 柱（双面板）,pdf+png+svg
+fig3_3b_curtail_profile,图 3-3b 弃电量的日内分布,q3_hourly_profile.csv,hour; curtail_kwh,24 行,柱状图,pdf+png+svg
+fig3_4a_soc_trajectory,图 3-4a 指定日期储电量轨迹,q3_target_days_interval.csv,date; t_template; soc_end_kwh,4 日 × 144 段,折线（线型+稀疏 marker）,pdf+png+svg
+fig3_4b_soc_distribution,图 3-4b 储电量分布,q3_soc_hist.csv,soc_end_kwh,"48,096 行",直方图,pdf+png+svg
+fig3_4c_charge_discharge,图 3-4c 充放电量分布,q3_charge_discharge_hist.csv,kind; kwh_per_interval,"43,657 行",分组直方图,pdf+png+svg
+fig3_5a_emergency_profile,图 3-5a 紧急购电量日内分布,q3_hourly_profile.csv,hour; emergency_kwh,24 行,柱状图,pdf+png+svg
+fig3_5b_emergency_price_band,图 3-5b 紧急购电按电价档,q3_emergency_by_price_band.csv,price_low; price_high; emergency_kwh; emergency_cost_yuan,4 行,柱状图（双面板）,pdf+png+svg
+fig3_6_stage_value,图 3-6 八种预报组合总费用,q3_stage_comparison.csv,policy; total_cost_yuan; saving_vs_0_only_pct,8 行,横向条形,pdf+png+svg
+fig3_7a_solver_stability,图 3-7a 求解算法费用偏差,q3_solver_sensitivity.csv,label; gap_yuan,3 行,柱状图,pdf+png+svg
+fig3_7b_lambda_sensitivity,图 3-7b λ 敏感性,q3_lambda_sensitivity.csv; q3_lambda_range.csv,lam_over_baseline; total_cost_yuan,7 行,折线 + marker,pdf+png+svg

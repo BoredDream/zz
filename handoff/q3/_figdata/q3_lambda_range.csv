@@ -1,0 +1,8 @@
+﻿item,value
+min_cost_lam,0.3585
+min_cost_yuan,13154552.985054664
+max_cost_lam,1.434
+max_cost_yuan,13251711.147309162
+spread_yuan,97158.16225449741
+spread_pct_of_baseline,0.7381334268982616
+costs_monotone_in_lam,False

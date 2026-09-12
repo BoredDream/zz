@@ -1,0 +1,52 @@
+{
+  "model": "multistage_rolling_SAA_scenario_branched_recourse",
+  "commit": "3fc646f",
+  "windows": {
+    "plan_adjust": "template_row_00:10_to_next_00:10",
+    "physical_reporting": "natural_day_00:00_to_24:00"
+  },
+  "stage0_horizon_intervals": 145,
+  "K": 30,
+  "stages": [
+    0,
+    1,
+    2,
+    3
+  ],
+  "delivery_period": {
+    "start": "2025-02-01",
+    "end": "2025-12-31",
+    "days": 334
+  },
+  "interval_count": 48096,
+  "totals": {
+    "total_cost_yuan": 13162682.885500716,
+    "plan_cost_yuan": 12114099.71636921,
+    "adjust_cost_yuan": 833624.8961012338,
+    "emergency_cost_yuan": 214958.2730302681,
+    "emergency_kwh": 38737.747832720306,
+    "charge_kwh": 6921852.87919573,
+    "discharge_kwh": 5607033.812995429,
+    "curtail_kwh": 1258785.6073165124,
+    "adjust_up_kwh": 585146.1292687943,
+    "adjust_down_kwh": 265196.70369861444
+  },
+  "solver_gap": {
+    "highs_ds_yuan": 0.0,
+    "highs_ipm_yuan": -28.208667498081923
+  },
+  "lambda_range": {
+    "spread_yuan": 97158.16225449741,
+    "spread_pct": 0.7381334268982616,
+    "monotone": false
+  },
+  "stage_comparison": {
+    "best": "0+6+12+18",
+    "saving_vs_0_only_yuan": 622378.875946993,
+    "shapley": {
+      "6:00": 130907.90139137735,
+      "12:00": 186175.2898384506,
+      "18:00": 305295.68471716496
+    }
+  }
+}
