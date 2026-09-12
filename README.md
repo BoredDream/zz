@@ -22,6 +22,7 @@
 - `scripts/build_result3_multistage.mjs`：用官方附件5模板生成第三问 `result3.xlsx`。
 - `scripts/validate_q3_multistage.py`：第三问独立验收（物理约束、费用口径恒等、工作簿逐格对账）。
 - `scripts/q3_solver_uniqueness_check.py`：第三问求解器退化与配置敏感性检验（整年换算法对照 + LP 级普查）；不修改 `src/`。
+- `scripts/verify_q3_multistage.py`：第三问独立复算（第二套实现，不 import 模型；从原始附件重算结算、储能轨迹与八组合）。
 - `outputs/q3_multistage/`：第三问正式工作簿与结果。
 - `docs/q4_model.md`：**第四问正式模型**（波动电价）的定义——电价两因子预测（形态×水平×日内AR(1)）、价格/负载/光伏同日配对的联合场景生成、价格加权分位数、变体 4-2/4-3 的差异。
 - `src/q4_solver.py`：第四问求解器，复用第三问的时间网格、母线侧储能口径、实时层与结算口径，替换电价部分。
@@ -123,6 +124,16 @@ node scripts\build_result3_multistage.mjs 0123 30                              #
 
 该脚本**不修改 `src/`**：模型用 `linprog(..., method='highs')` 调用，`method` 是关键字
 参数，脚本替换模块命名空间里的 `linprog` 名字即可换算法。结论见报告第 8.1 节。
+
+### 独立复算（第二套实现）
+
+```powershell
+.\.venv\Scripts\python.exe -X utf8 scripts\verify_q3_multistage.py 0123 30   # 约 2 s
+```
+
+该脚本**不 import `src/q3_multistage.py`**：只读原始附件 1/2 的 xlsx 与已落盘明细 npz，
+按题面公式与 README「固定口径」从零重算结算费用、实时层与储能轨迹，并独立重算八组合
+与 Shapley 分摊；偏差应为 0.000e+00。它**不重解任何 LP**。结论见报告第 8.2 节。
 
 模型定义见 `docs/q3_multistage_model.md`，输出位于 `outputs/q3_multistage/`。
 计划/调整表保留模板行（`t=0`覆盖0:10–0:20，`t=143`覆盖次日0:00–0:10）；

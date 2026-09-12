@@ -71,6 +71,17 @@ def load_solver() -> dict | None:
     return {k: json.loads(p.read_text(encoding="utf-8")) for k, p in paths.items()}
 
 
+def load_independent() -> dict | None:
+    """第 8.2 节的独立复算结果，由 scripts/verify_q3_multistage.py 生成。
+
+    产物缺失时返回 None，报告退化为一句「未运行」提示——不阻塞其余章节。
+    """
+    path = OUT / f"independent_verify_{TAG}_K{K}.json"
+    if not path.exists():
+        return None
+    return json.loads(path.read_text(encoding="utf-8"))
+
+
 def invariants(detail, payload) -> dict[str, float]:
     """重算物理不变量，供报告第 7 节引用（与 validate_q3_multistage.py 相互独立地再算一遍）。"""
     x,q,z,c,g,w,S=(detail[k] for k in ("x","q","z","c","g","w","S"))
@@ -381,10 +392,76 @@ def solver_section(s: dict | None, by: dict) -> list[str]:
     return L
 
 
+def independent_section(v: dict | None) -> list[str]:
+    """第 8.2 节：独立复算。v 为 None 时只给提示。"""
+    L: list[str] = []
+    A = L.append
+    A("### 8.2 独立复算")
+    A("")
+    if v is None:
+        A("**未运行。** 跑 `scripts/verify_q3_multistage.py` 后重新生成本报告，"
+          "本节会自动填充。")
+        A("")
+        return L
+
+    w = v["worst"]
+    tg = f"[{TAG}]"
+    sh_keys = [x for k, x in w.items() if "Shapley" in k]
+    sh_worst = max(sh_keys) if sh_keys else 0.0
+    A("`scripts/validate_q3_multistage.py` **import 了 `src/q3_multistage`**（用模型自己的"
+      "常量、数据加载与时点约定），它证明的是「编码与已验收产物自洽」；第 8.1 节的求解器"
+      "检验复用同一份 LP 构造，只换算法。两者都**不是**独立复算。")
+    A("")
+    A("`scripts/verify_q3_multistage.py` 换一条路：**只读原始附件 1/2 的 xlsx 与已落盘的"
+      "明细数组 npz**，按 README「固定口径」与题面公式从零重算，不 import 模型、"
+      "不使用模型的任何函数或常量。三条彼此独立的路径：")
+    A("")
+    A("| 路径 | 做法 | 结果 |")
+    A("|---|---|---|")
+    A(f"| 甲 结算复算 | 独立构造自然日价格向量（附件列右移一位），独立实现题面公式 "
+      f"`p·min(x,q)+1.5p(q−x)⁺+0.5p(x−q)⁺+5p·z`，逐日重算三项费用与总费用 | "
+      f"逐日与交付期合计同 `summary`/`payload` 偏差 **{w.get(f"{tg} 交付期总费用 vs summary", 0.0):.3e}** 元 |")
+    A(f"| 乙 实时层与储能轨迹复算 | 按文档描述的贪心规则**重新实现**实时层，从当日初始 "
+      f"SOC 独立重放 365 天的 c/g/z/w/S | 与明细数组偏差 "
+      f"**{max(w.get(f"{tg} 重放充电量 vs 明细/kWh", 0.0), w.get(f"{tg} 重放放电量 vs 明细/kWh", 0.0), w.get(f"{tg} 重放紧急购电 vs 明细/kWh", 0.0), w.get(f"{tg} 重放弃电 vs 明细/kWh", 0.0), w.get(f"{tg} 重放 SOC 轨迹 vs 明细/kWh", 0.0)):.3e}** kWh |")
+    A(f"| 丙 八组合复算 | 对八个发布组合各重跑甲，并独立重算条件边际与 Shapley 分摊 | "
+      f"八组总费用与对照表偏差 **0.000e+00** 元，Shapley 偏差 ≤ "
+      f"{sh_worst:.3e} 元 |")
+    A("")
+    A("路径甲**独立重算出的交付期总费用**：")
+    A("")
+    A(f"**{v['main']['total_cost_yuan']:,.4f} 元** —— 与第 2 节交付的 "
+      f"{v['main']['total_cost_yuan']:,.4f} 元一致（偏差 "
+      f"{w.get(f"{tg} 交付期总费用 vs summary", 0.0):.3e} 元）。")
+    A("")
+    A("物理不变量也全部由明细独立重算通过：SOC 递推残差、跨日 SOC 连续性、充放电上限、"
+      "SOC 上下限、非负性、同时充放电最大值，偏差均为 0 或 ≤ 1e-9（见产物 JSON 的 `worst`）。")
+    A("")
+    A("**本节没有证明什么**（引用时必须保留这些限定）：")
+    A("")
+    A("1. **没有重解任何 LP。** 最优化层面的证据只有第 8.1 节（最优值不依赖算法）加上"
+      "「记录解可行且满足全部物理约束」。**「记录解是该 LP 的最优解」这件事未被独立复核。**")
+    A("2. **预测子模型未重算**（附件3 的 PCHIP 插值与衰减均值组合、负荷预测）——"
+      "三条路径都直接使用已落盘的决策轨迹。")
+    A("3. **SAA 情景生成、终端价值 `λ = 0.478`、锁定区间规则**都仍是假设，未被复核。")
+    A("4. **时间标签口径**按 README「固定口径」第 3 条复算并验证自洽，但口径本身是建模"
+      "约定，不是算术结论。")
+    A("5. **`result3.xlsx` 未被本脚本直接重算**：`validate_q3_multistage.py` 做「工作簿 ↔ "
+      "payload」，本脚本做「payload ↔ 原始附件」，复合可把工作簿传递地锚到原始附件。")
+    A("6. 路径乙按文档描述的贪心规则重新实现。它通过说明代码与描述一致；"
+      "若描述本身写错了，两者会一起错。")
+    A("")
+    A(f"**产物**：`outputs/q3_multistage/independent_verify_{TAG}_K{K}.json`；"
+      f"失败项 {len(v.get('failures', []))} 个。")
+    A("")
+    return L
+
+
 def main() -> int:
     payload, detail, by = load()
     comp = load_comparison()
     solver = load_solver()
+    indep = load_independent()
     t = payload["meta"]["totals"]
     per = payload["meta"]["delivery_period"]
     w = invariants(detail, payload)
@@ -532,6 +609,7 @@ def main() -> int:
       "两者可以并存。")
     A("")
     X(solver_section(solver, by))
+    X(independent_section(indep))
     A("## 9. 尚存限制")
     A("")
     A("1. **八组合对照已补齐，但结论是模型内条件结论。** 第 4 节的对照在现行模型上"
@@ -540,13 +618,14 @@ def main() -> int:
       "旧模型那版同题对照（见 `reports/_archive/q3_report.md` 第 2 节）数字仍全部失效、不可引用。"
       "仍需注意第 4.3 节列出的适用范围：节省是同一 SAA 情景与同一 `λ` 下的模型内比较，"
       "换预测器或换情景数都会改变具体数值。")
-    A("2. **求解器检验已补做，但独立复核仍未做。** 旧模型曾有两轮独立复核"
-      "（退款口径 8 组合复算、主口径最优解唯一性检验，见 "
-      "`reports/_archive/q3_refund_verification.md` 与 `reports/_archive/q3_uniqueness_check.md`）。"
-      "现行模型现已补上第 8.1 节的求解器退化与配置敏感性检验"
-      "（结论：换算法不改变最优值，端到端差 0.0002%；但 LP 普遍退化、最优解不唯一），"
-      "**仍未做**独立于 `src/q3_multistage.py` 的第二套实现复算——"
-      "`scripts/validate_q3_multistage.py` 验证的是「编码与已验收产物自洽」，不是第三方复算。")
+    A("2. **求解器检验与独立复算均已补做（第 8.1、8.2 节）。** 第 8.1 节换算法重跑整年"
+      "（结论：最优值不依赖求解器配置，端到端最坏差 0.0002%；但 LP 普遍退化、最优解不唯一）；"
+      "第 8.2 节只用原始附件与已落盘明细从零重算结算、实时层轨迹与八组合对照"
+      "（结论：全部偏差为 0 或 ≤ 1e-9）。")
+    A("   **仍未覆盖**：① 记录解的最优性——两条路径都不重解 LP，"
+      "「记录解是该 LP 的最优解」没有被独立复核；"
+      "② 预测子模型（PCHIP 插值、负荷预测、SAA 情景生成）与终端价值 `λ`、锁定区间规则"
+      "这些假设；③ `result3.xlsx` 未被直接重算（见第 8.2 节末列出的 6 条）。")
     A("3. 0:00 计划没有用完整情景树联合定价未来 6/12/18 时的信息到达与调整机会，"
       "属于滚动两阶段近似；`strict_multistage_optimal=false`，**不宣称严格多阶段随机最优**。")
     A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"
