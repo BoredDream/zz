@@ -16,6 +16,8 @@ import numpy as np
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 import q4_solver as M  # noqa: E402
+import q3_multistage as Q3  # noqa: E402
+import q4_q2_solver as Q2M  # noqa: E402
 
 OUT = ROOT / "outputs" / "q4"
 Q3_SUMMARY = ROOT / "outputs" / "q3_multistage" / "summary_stages0123_K30.json"
@@ -40,26 +42,29 @@ def load(variant: str):
     return payload, detail, {day["date"]: day for day in payload["days"]}
 
 
-def invariants(detail) -> dict[str, float]:
+def invariants(detail, variant: str) -> dict[str, float]:
     """重算物理不变量，供报告第 7 节引用（与 validate_q4.py 相互独立地再算一遍）。"""
-    x, q, z, c, g, w, S = (detail[k] for k in ("x", "q", "z", "c", "g", "w", "S"))
+    x,q,z,c,g,w,S=(detail[k] for k in ("x","q","z","c","g","w","S"))
+    nx,nq=detail["natural_x"],detail["natural_q"]
     S0 = detail["S0"]
+    q2data=Q2M.load_inputs(ROOT/"problem"/"data",Q2M.B.Config()) if variant=="2" else None
     worst = {"balance": 0.0, "soc": 0.0, "charge_limit": 0.0, "discharge_limit": 0.0,
              "soc_lo": 0.0, "soc_hi": 0.0, "cost_split": 0.0}
     for i in range(len(S0)):
-        prev = float(S0[i])
         for t in range(M.T):
-            now = float(S[i, t])
-            worst["soc"] = max(worst["soc"], abs(now - (prev + M.ETA * c[i, t] - g[i, t] / M.ETA)))
-            worst["balance"] = max(worst["balance"], abs(q[i, t] + z[i, t] + g[i, t]
-                                                      - c[i, t] - w[i, t] - (M.L[i, t] - M.G[i, t])))
+            now=float(S[i,t+1]); worst["soc"]=max(worst["soc"],abs(now-(S[i,t]+M.ETA*c[i,t]-g[i,t]/M.ETA)))
+            if variant=="2": actual=float(q2data["net_actual"][i,t] if not(i==0 and t==0) else q2data["cold_start_net"][0])
+            else:
+                ml,mg=Q3.midnight_actual(i); actual=(ml-mg) if t==0 else M.L[i,t-1]-M.G[i,t-1]
+            worst["balance"]=max(worst["balance"],abs(nq[i,t]+z[i,t]+g[i,t]-c[i,t]-w[i,t]-actual))
             worst["charge_limit"] = max(worst["charge_limit"], c[i, t] - M.CMAX)
             worst["discharge_limit"] = max(worst["discharge_limit"], g[i, t] - M.CMAX)
             worst["soc_lo"] = max(worst["soc_lo"], M.SMIN - now)
             worst["soc_hi"] = max(worst["soc_hi"], now - M.SMAX)
-            prev = now
-        total = M.day_cost4(i, x[i], q[i], {"z": z[i]})[0]
-        p1, p2, p3 = M.settle_parts4(i, x[i], q[i], z[i])
+        if variant=="2":
+            pp=q2data["price4_natural"][i]; p1=pp*nx[i]; p2=np.zeros(M.T); p3=5*pp*z[i]
+        else: p1,p2,p3=M.natural_settle_parts4(i,nx[i],nq[i],z[i])
+        total=float(p1.sum()+p2.sum()+p3.sum())
         worst["cost_split"] = max(worst["cost_split"], abs(total - (p1.sum() + p2.sum() + p3.sum())))
     return worst
 
@@ -90,8 +95,8 @@ def table2(day2: dict, day3: dict) -> list[str]:
         rows.append(f"| {b2['time_range']} | {f(b2['charge_kwh'])} | {f(b2['discharge_kwh'])} | "
                     f"{f(b3['charge_kwh'])} | {f(b3['discharge_kwh'])} |")
     rows += [
-        f"| 0:10 储电量 | {f(day2['soc_start_kwh'])} | | {f(day3['soc_start_kwh'])} | |",
-        f"| 次日 0:10 储电量 | {f(day2['soc_end_kwh'])} | | {f(day3['soc_end_kwh'])} | |",
+        f"| 0:00 储电量 | {f(day2['soc_start_kwh'])} | | {f(day3['soc_start_kwh'])} | |",
+        f"| 24:00 储电量 | {f(day2['soc_end_kwh'])} | | {f(day3['soc_end_kwh'])} | |",
     ]
     return rows
 
@@ -115,7 +120,7 @@ def main() -> int:
     plan2 = sum(day["plan_total_kwh"] for day in p2["days"])
     adj3 = sum(day["adjusted_total_kwh"] for day in p3["days"])
     plan3 = sum(day["plan_total_kwh"] for day in p3["days"])
-    w2, w3 = invariants(d2), invariants(d3)
+    w2, w3 = invariants(d2,"2"), invariants(d3,"3")
 
     L: list[str] = []
     A, X = L.append, L.extend
@@ -127,15 +132,15 @@ def main() -> int:
     A("")
     A("## 1. 模型与口径")
     A("")
-    A("第四问要求在波动电价下重算问题2和问题3。两个变体共用同一模型，只在决策结构上不同：")
+    A("第四问在波动电价下分别重算问题2和问题3：4-2直接继承Q2，4-3继承Q3。")
     A("")
     A("| 变体 | 对应 | 决策结构 | 输出文件 |")
     A("|---|---|---|---|")
     A("| 4-2 | 问题2 | 只在 0:00 决策一次，不设调整机制（`q ≡ x`） | `result4-2.xlsx` |")
     A("| 4-3 | 问题3 | 0:00 计划 + 6:00/12:00/18:00 三次滚动调整 | `result4-3.xlsx` |")
     A("")
-    A("三条口径与问题 1/2/3 完全一致：**模板行时间框**（第 `t` 个时段覆盖 "
-      "`[(t+1)×10, (t+2)×10)` 分钟，`t=0` 为 0:10–0:20，`t=143` 为次日 0:00–0:10）；"
+    A("区间起点和物理参数一致，但报表时间框不同：计划/调整表保留模板行；"
+      "实际执行、SOC、紧急购电和总费用按自然日0:00–24:00跨行重组；"
       "**交流母线侧储能**（`S_t = S_(t-1) + 0.9·c_t − g_t/0.9`，充、放电单时段上限同为 "
       "`5000/6 = 833.3333` kWh）；**题面结算口径**")
     A("")
@@ -147,9 +152,9 @@ def main() -> int:
       f"（365×144，范围 {M.PMAT.min():.4f}–{M.PMAT.max():.4f} 元/kWh，均值 {M.PMAT.mean():.4f}）。"
       "**预测值只参与决策，不参与结算。**")
     A("")
-    A("与问题 2/3 的唯一实质差别是电价不再已知：0:00 时当天电价未知，"
-      "先用电价预测模型（日内形态 × 水平 × 日内 AR(1) 修正），6:00/12:00/18:00 "
-      "再用已实现电价滚动修正；价格、负载、光伏按**同日配对**做联合场景重采样以保住相关性"
+    A("4-2保留Q2的负荷/光伏预测器、145段时域、SOC与因果执行规则，只加入基于历史的波动价格预测；"
+      "4-3保留Q3的四阶段结构，价格预测采用日内形态 × 水平 × 日内AR(1)，并在6:00/12:00/18:00"
+      "用已实现电价滚动修正。4-3的价格、负载、光伏按**同日配对**做联合场景重采样以保住相关性"
       f"（情景数 `K = {K}`）。")
     A("")
     A(f"交付期为 {per['start']} 至 {per['end']}，共 {per['days']} 天。"
@@ -175,16 +180,19 @@ def main() -> int:
       f"{sum(1 for x in p3['days'] if x['emergency_segments'])} / {per['days']} |")
     A("")
     save = t2["total_cost_yuan"] - t3["total_cost_yuan"]
-    A(f"**滚动调整（4-3）相对一次决策（4-2）全年节省 {f(save)} 元"
+    A(f"**Q3型四阶段策略（4-3）相对Q2型一次决策（4-2）全年节省 {f(save)} 元"
       f"（{save / t2['total_cost_yuan'] * 100:.2f}%），紧急购电量由 "
       f"{f(t2['emergency_kwh'])} 降至 {f(t3['emergency_kwh'])} kWh"
       f"（−{(1 - t3['emergency_kwh'] / t2['emergency_kwh']) * 100:.1f}%）。**")
     A("")
     n2 = sum(1 for x in p2["days"] if x["emergency_segments"])
     n3 = sum(1 for x in p3["days"] if x["emergency_segments"])
-    A(f"需要注意：4-3 发生紧急购电的**天数反而更多**（{n3} 天 vs {n2} 天），"
-      "但总电量少得多。滚动调整不是消除了紧急购电，而是把少数几次大额紧急购电"
-      "拆成了更多次的小额紧急购电。")
+    if n3 <= n2:
+        A(f"4-3 的紧急购电日期由 {n2} 天降至 {n3} 天，紧急购电总量也显著下降。"
+          "该差异是Q2型与Q3型完整策略的对照，不能单独归因于日内滚动调整。")
+    else:
+        A(f"4-3 的紧急购电日期为 {n3} 天，高于4-2的 {n2} 天，但总量更低。"
+          "该差异是Q2型与Q3型完整策略的对照，不能单独归因于日内滚动调整。")
     A("")
 
     if Q3_SUMMARY.exists():
@@ -247,9 +255,7 @@ def main() -> int:
 
     A("## 5. 指定日期：表2 充放电量与储电量")
     A("")
-    A("按题面表2 的格式给出四个日期，六个 4 小时段即 `t=0..23, 24..47, …, 120..143`。"
-      "储电量按模板行口径给出，即该行起点（0:10）与终点（次日 0:10）的储电量，"
-      "与 `result4-*.xlsx` 的「充放电量」工作表一致。")
+    A("按题面表2自然日口径给出四个日期：0:00–4:00至20:00–24:00；SOC为0:00与24:00。")
     A("")
     for date in DATES:
         A(f"### {date}")

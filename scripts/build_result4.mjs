@@ -60,7 +60,7 @@ for (const day of payload.days) {
       block.time_range,
       block.charge_kwh,
       block.discharge_kwh,
-      index === 0 ? "0:10" : index === 1 ? "0:10+1" : null,
+      index === 0 ? "0:00" : index === 1 ? "24:00" : null,
       index === 0 ? day.soc_start_kwh : index === 1 ? day.soc_end_kwh : null,
     ]);
   });

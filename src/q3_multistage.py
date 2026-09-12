@@ -78,7 +78,9 @@ def pv_from_forecast(d, m):
         return None
     t0 = h0 * 60
     if h0 == 0:
-        anchor = GKW[d-1, T-1] if d > 0 else 0.0      # 0:00 = 前一天 24:00 实测
+        # 0:00 只能使用刚结束的 23:50--24:00 区间；原始末列对应
+        # 0:00--0:10，发布时尚未实现，禁止拿它作锚点。
+        anchor = GKW[d-1, T-2] if d > 0 else _a1.G.values[-2]
     else:
         anchor = GKW[d, (h0*60)//10 - 1]
     ts = np.concatenate([[t0], t0 + 60*np.arange(1, 25)])
@@ -228,6 +230,85 @@ def stage_lp(m, x_ref, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM):
         raise RuntimeError('LP infeasible at stage %d' % m)
     return r.x[:nD]
 
+
+def stage0_lp_145(committed_q, S_cur, scenL, scenG, alpha=ALPHA, lam=LAM):
+    """0:00 的 145 段随机 LP。
+
+    h=0 是前一日已锁定的 00:00--00:10 合约量；h=1..144 对应今天
+    新发布的模板行 t=0..143。首段参与物理/SOC递推但不是当天的新决策。
+    """
+    K, H, tn = len(scenL), T + 1, TSTAGE[1]
+    if any(len(v) != H for v in (*scenL, *scenG)):
+        raise ValueError("阶段0情景必须为145段")
+    R = list(range(tn, T))
+    nD, nR = T, len(R)
+    per = 2 * nR + 5 * H
+    nv = nD + K * per
+
+    def o(k):
+        return nD + k * per
+
+    obj = np.zeros(nv)
+    obj[:tn] = P[:tn]
+    obj[tn:nD] = 0.5 * P[tn:]
+    rows, cols, vals, beq = [], [], [], []
+    iru, icu, ivu, bub = [], [], [], []
+    nr = nq = 0
+    for k in range(K):
+        ok = o(k)
+        oQ, oU = ok, ok + nR
+        oc, og = ok + 2*nR, ok + 2*nR + H
+        oz, ow, oS = ok + 2*nR + 2*H, ok + 2*nR + 3*H, ok + 2*nR + 4*H
+        for j, t in enumerate(R):
+            obj[oQ+j] += 0.5 * P[t] / K
+            obj[oU+j] += P[t] / K
+        p145 = np.r_[P[-1], P]
+        obj[oz:oz+H] += alpha * p145 / K
+        obj[oS+H-1] -= lam / K
+
+        for h in range(H):
+            if h == 0:
+                rhs = scenL[k][h] - scenG[k][h] - committed_q
+            else:
+                t = h - 1
+                if t < tn:
+                    rows.append(nr); cols.append(t); vals.append(1.0)
+                else:
+                    rows.append(nr); cols.append(oQ + t-tn); vals.append(1.0)
+                rhs = scenL[k][h] - scenG[k][h]
+            for cc, vv in ((oz+h, 1.0), (og+h, 1.0), (oc+h, -1.0), (ow+h, -1.0)):
+                rows.append(nr); cols.append(cc); vals.append(vv)
+            beq.append(float(rhs)); nr += 1
+
+        for h in range(H):
+            for cc, vv in ((oS+h, 1.0), (oc+h, -ETA), (og+h, 1.0/ETA)):
+                rows.append(nr); cols.append(cc); vals.append(vv)
+            if h:
+                rows.append(nr); cols.append(oS+h-1); vals.append(-1.0)
+                beq.append(0.0)
+            else:
+                beq.append(float(S_cur))
+            nr += 1
+
+        for j, t in enumerate(R):
+            iru += [nq, nq, nq]
+            icu += [oQ+j, oU+j, t]
+            ivu += [1.0, -1.0, -1.0]
+            bub.append(0.0); nq += 1
+
+    Aeq = sp.csr_matrix((vals, (rows, cols)), shape=(nr, nv))
+    Aub = sp.csr_matrix((ivu, (iru, icu)), shape=(nq, nv))
+    lb, ub = np.zeros(nv), np.full(nv, np.inf)
+    for k in range(K):
+        ok = o(k); oc = ok+2*nR; og = oc+H; oS = ok+2*nR+4*H
+        ub[oc:oc+H] = CMAX; ub[og:og+H] = CMAX
+        lb[oS:oS+H] = SMIN; ub[oS:oS+H] = SMAX
+    result = linprog(obj, A_ub=Aub, b_ub=np.asarray(bub), A_eq=Aeq,
+                     b_eq=np.asarray(beq), bounds=np.column_stack([lb, ub]), method='highs')
+    if result.x is None:
+        raise RuntimeError('LP infeasible at stage 0 (145 intervals)')
+    return result.x[:T]
+
 # ----------------------------------------------------------------------
 # 3. 实时层：给定已锁定的合约量，10 分钟粒度调度储能，不足则紧急购电
 # ----------------------------------------------------------------------
@@ -249,6 +330,20 @@ def dispatch(t0, t1, q, S, Lr, Gr, out):
         out['S'][t] = S
     return S
 
+
+def dispatch_locked_interval(q, S, load, pv):
+    """执行午夜已锁定的一段，不读取该段实现值来反推0:00计划。"""
+    net = float(load - pv - q)
+    c = g = z = w = 0.0
+    if net > 0:
+        g = max(min(net, CMAX, (S-SMIN)*ETA), 0.0)
+        S -= g/ETA; z = net-g
+    else:
+        surplus = -net
+        c = max(min(surplus, CMAX, (SMAX-S)/ETA), 0.0)
+        S += ETA*c; w = surplus-c
+    return S, dict(c=c, g=g, z=z, w=w)
+
 # ----------------------------------------------------------------------
 # 4. 单日主流程
 # ----------------------------------------------------------------------
@@ -257,7 +352,8 @@ def scenarios(d, m, K=30):
     整条路径重采样而非逐点独立抽样，才能保住误差的时序相关性。"""
     Lh, Gh = load_hat(d, m), pv_hat(d, m)
     sl, sg = [], []
-    for j in range(1, K+1):
+    first_lag = 2 if m == 0 else 1
+    for j in range(first_lag, first_lag+K):
         dd = d - j
         if dd < 10:
             continue
@@ -267,20 +363,60 @@ def scenarios(d, m, K=30):
         sl, sg = [Lh], [Gh]
     return sl, sg
 
-def solve_day(d, S0, K=30, stages=(0, 1, 2, 3), cache=None):
+
+def midnight_center(d):
+    """0:00 对 00:00--00:10 的因果预测：使用上一已完成区间持久性。"""
+    if d > 0:
+        return float(L[d-1, T-2]), float(G[d-1, T-2])
+    return float(_a1.L.values[-2] * DT), float(_a1.G.values[-2] * DT)
+
+
+def midnight_actual(d):
+    """自然日首段实际值；附件2缺失的1月1日午夜仅作冷启动。"""
+    if d > 0:
+        return float(L[d-1, T-1]), float(G[d-1, T-1])
+    return float(_a1.L.values[-1] * DT), float(_a1.G.values[-1] * DT)
+
+
+def scenarios0_145(d, K=30):
+    """阶段0使用145段，并且最晚只使用 d-2 的完整历史轮廓。"""
+    Lh, Gh = load_hat(d, 0), pv_hat(d, 0)
+    ml, mg = midnight_center(d)
+    center_l, center_g = np.r_[ml, Lh], np.r_[mg, Gh]
+    sl, sg = [], []
+    for j in range(2, K+2):
+        dd = d-j
+        if dd < 10:
+            continue
+        aml, amg = midnight_actual(dd)
+        hml, hmg = midnight_center(dd)
+        hist_l = np.r_[aml, L[dd]]
+        hist_g = np.r_[amg, G[dd]]
+        hist_hat_l = np.r_[hml, load_hat(dd, 0)]
+        hist_hat_g = np.r_[hmg, pv_hat(dd, 0)]
+        sl.append(np.maximum(center_l + hist_l-hist_hat_l, 0.0))
+        sg.append(np.maximum(center_g + hist_g-hist_hat_g, 0.0))
+    return (sl, sg) if sl else ([center_l], [center_g])
+
+def solve_day(d, S0, committed_q, K=30, stages=(0, 1, 2, 3), cache=None):
     """stages 指定启用哪些调整时刻，(0,) 即退化为问题 2 的"只在 0:00 决策"。"""
     out = {k: np.zeros(T) for k in ('z', 'c', 'g', 'w', 'S')}
-    sl, sg = scenarios(d, 0, K)
-    x = stage_lp(0, None, S0, sl, sg)          # 0:00 计划
+    sl, sg = scenarios0_145(d, K)
+    x = stage0_lp_145(committed_q, S0, sl, sg) # 0:00 计划，含已锁定午夜段
     q = x.copy()                               # 最终合约量
-    S = S0
+    ml, mg = midnight_actual(d)
+    S, midnight = dispatch_locked_interval(committed_q, S0, ml, mg)
+    S_after_midnight = S
     for m in range(4):
         tm, tn = TSTAGE[m], TSTAGE[m+1]
         if m >= 1 and m in stages:
             sl, sg = scenarios(d, m, K)
             q[tm:tn] = stage_lp(m, x, S, sl, sg)
-        S = dispatch(tm, tn, q, S, L[d], G[d], out)
-    return x, q, out, S
+        # t=143 是次日00:00--00:10，必须留给次日0:00决策之后执行。
+        S = dispatch(tm, min(tn, T-1), q, S, L[d], G[d], out)
+    natural = {k: np.r_[midnight[k], out[k][:T-1]] for k in ('c','g','z','w')}
+    natural['S'] = np.r_[S0, S_after_midnight, out['S'][:T-1]]
+    return x, q, out, natural, S
 
 def day_cost(x, q, out):
     """0.5p*x + 0.5p*q + p*(q-x)^+ + 5p*z"""
@@ -288,6 +424,22 @@ def day_cost(x, q, out):
     adj  = (0.5*P*q).sum() + (P*np.maximum(q-x, 0)).sum()
     emg  = (5*P*out['z']).sum()
     return plan+adj+emg, plan+adj, emg
+
+
+def natural_price():
+    return np.r_[P[-1], P[:T-1]]
+
+
+def natural_settle_parts(x, q, z):
+    """自然日00:00--24:00费用；x/q已跨行拼接。"""
+    p = natural_price()
+    up, dn = np.maximum(q-x, 0.0), np.maximum(x-q, 0.0)
+    return p*np.minimum(x, q), 1.5*p*up + 0.5*p*dn, 5.0*p*z
+
+
+def natural_day_cost(x, q, z):
+    parts = natural_settle_parts(x, q, z)
+    return float(sum(v.sum() for v in parts))
 
 def settle_parts(x, q, z):
     """按题面口径把单日费用拆成填写工作簿用的三项（三者之和恒等于 day_cost 的总费用）：
@@ -324,15 +476,35 @@ def emergency_segments(z, tol=1e-6):
             start = None
     return segs
 
+
+def natural_emergency_segments(z, tol=1e-6):
+    """自然日数组的紧急购电时段标签。"""
+    segs, start = [], None
+    for t, v in enumerate(np.r_[z, 0.0]):
+        if v > tol and start is None:
+            start = t
+        elif v <= tol and start is not None:
+            segs.append({'time_range': '%s-%s' % (clock_min(start*10), clock_min(t*10)),
+                         'energy_kwh': float(z[start:t].sum())})
+            start = None
+    return segs
+
 # ----------------------------------------------------------------------
 # 5. 全年回测
 # ----------------------------------------------------------------------
 def backtest(d0=0, d1=ND, K=30, stages=(0, 1, 2, 3), S0=6000.0, verbose=True):
     S, rec = S0, {}
+    cold = max(float((_a1.L.values[-1]-_a1.G.values[-1])*DT), 0.0)
+    committed_x = committed_q = cold
     for d in range(d0, d1):
         Sstart = S
-        x, q, out, S = solve_day(d, S, K, stages)
-        rec[d] = dict(x=x, q=q, S0=Sstart, S24=out['S'][142], **out)
+        x, q, out, natural, S = solve_day(d, S, committed_q, K, stages)
+        natural_x = np.r_[committed_x, x[:T-1]]
+        natural_q = np.r_[committed_q, q[:T-1]]
+        rec[d] = dict(x=x, q=q, S0=Sstart, S24=S,
+                      natural_x=natural_x, natural_q=natural_q,
+                      natural=natural, **out)
+        committed_x, committed_q = float(x[-1]), float(q[-1])
         if verbose and d % 20 == 0:
             print(d, DSTR[d], 'S=%.0f' % S, flush=True)
     return rec, S

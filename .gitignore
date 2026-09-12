@@ -8,6 +8,7 @@ __pycache__/
 # 第三问可再生产物：体积大且可由 src/q3_solver.py 重算，不入库
 outputs/q3/checkpoints/
 outputs/q3/result3.xlsx.inspect.ndjson
+outputs/q3_multistage/*.xlsx.inspect.ndjson
+outputs/q4/*.xlsx.inspect.ndjson
 # 阶段B退款口径敏感性检查点：可由 scripts/q3_strategy_decision.py 重算
 outputs/q3/checkpoints_sensitivity/
-

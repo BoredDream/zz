@@ -20,6 +20,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "src"))
 import q4_solver as M  # noqa: E402
 import q3_multistage as Q3  # noqa: E402
+import q4_q2_solver as Q2M  # noqa: E402
 
 OUT = ROOT / "outputs" / "q4"
 TOL = 1e-6
@@ -41,9 +42,11 @@ def main() -> int:
     detail = np.load(OUT / f"detail_q4-{which}_K{K}.npz")
     dates = [str(d) for d in detail["dates"]]
     x, q, z, c, g, w, S = (detail[k] for k in ("x", "q", "z", "c", "g", "w", "S"))
+    natural_x, natural_q = detail["natural_x"], detail["natural_q"]
     S0 = detail["S0"]
     days = payload["days"]
     first = dates.index(days[0]["date"])
+    q2data = Q2M.load_inputs(ROOT / "problem" / "data", Q2M.B.Config()) if which == "2" else None
 
     print("=" * 88)
     print(f"A. 物理与费用口径  变体 4-{which}，K={K}，{len(dates)} 天 × {M.T} 时段")
@@ -55,23 +58,28 @@ def main() -> int:
     worst = {k: 0.0 for k in ("soc", "balance", "charge_limit", "discharge_limit",
                               "soc_min", "soc_max", "negativity", "cost_split", "soc_start_chain")}
     for i, d in enumerate(dates):
-        prev = float(S0[i])
         for t in range(M.T):
-            now = float(S[i, t])
-            worst["soc"] = max(worst["soc"], abs(now - (prev + M.ETA * c[i, t] - g[i, t] / M.ETA)))
+            now = float(S[i,t+1])
+            worst["soc"] = max(worst["soc"],abs(now-(S[i,t]+M.ETA*c[i,t]-g[i,t]/M.ETA)))
+            if which == "2":
+                actual=float(q2data["net_actual"][i,t] if not (i == 0 and t == 0) else q2data["cold_start_net"][0])
+            else:
+                ml,mg=Q3.midnight_actual(i)
+                actual=(ml-mg) if t == 0 else (M.L[i,t-1]-M.G[i,t-1])
             worst["balance"] = max(worst["balance"],
-                                   abs(q[i, t] + z[i, t] + g[i, t] - c[i, t] - w[i, t]
-                                       - (M.L[i, t] - M.G[i, t])))
+                                   abs(natural_q[i,t]+z[i,t]+g[i,t]-c[i,t]-w[i,t]-actual))
             worst["charge_limit"] = max(worst["charge_limit"], c[i, t] - M.CMAX)
             worst["discharge_limit"] = max(worst["discharge_limit"], g[i, t] - M.CMAX)
             worst["soc_min"] = max(worst["soc_min"], M.SMIN - now)
             worst["soc_max"] = max(worst["soc_max"], now - M.SMAX)
             worst["negativity"] = max(worst["negativity"], -min(c[i, t], g[i, t], z[i, t], w[i, t]))
-            prev = now
         if i > 0:
-            worst["soc_start_chain"] = max(worst["soc_start_chain"], abs(float(S0[i]) - float(S[i - 1, M.T - 1])))
-        total = M.day_cost4(i, x[i], q[i], {"z": z[i]})[0]
-        p1, p2, p3 = M.settle_parts4(i, x[i], q[i], z[i])
+            worst["soc_start_chain"] = max(worst["soc_start_chain"],abs(float(S0[i])-float(S[i-1,-1])))
+        if which == "2":
+            pp=q2data["price4_natural"][i]; p1=pp*natural_x[i]; p2=np.zeros(M.T); p3=5*pp*z[i]
+        else:
+            p1,p2,p3=M.natural_settle_parts4(i,natural_x[i],natural_q[i],z[i])
+        total=float(p1.sum()+p2.sum()+p3.sum())
         worst["cost_split"] = max(worst["cost_split"], abs(total - (p1.sum() + p2.sum() + p3.sum())))
     for name, value in worst.items():
         check(name, float(value))
@@ -137,15 +145,15 @@ def main() -> int:
                          abs(float(ws.cell(2 + 6 * i, 6).value or 0.0) - day["soc_start_kwh"]),
                          abs(float(ws.cell(3 + 6 * i, 6).value or 0.0) - day["soc_end_kwh"]))
         bad["time"] = max(bad["time"],
-                          0.0 if ws.cell(2 + 6 * i, 5).value == "0:10" else 1.0,
-                          0.0 if ws.cell(3 + 6 * i, 5).value == "0:10+1" else 1.0)
+                          0.0 if ws.cell(2 + 6 * i, 5).value == "0:00" else 1.0,
+                          0.0 if ws.cell(3 + 6 * i, 5).value == "24:00" else 1.0)
     print(f"  [info] 表2 段标签 {expected_labels}")
     check("表2 日期行结构(334×6行)", float(bad["rows"]))
     check("表2 六个段标签", bad["block"])
     check("表2 充电量", bad["charge"])
     check("表2 放电量", bad["discharge"])
     check("表2 时刻列", bad["time"])
-    check("表2 0:10 / 次日0:10 储电量", bad["soc"])
+    check("表2 0:00 / 24:00 储电量", bad["soc"])
 
     ws = wb["紧急购电量"]
     expect = [row for day in days for row in
@@ -172,10 +180,15 @@ def main() -> int:
           abs(t["plan_cost_yuan"] + t["adjust_cost_yuan"] + t["emergency_cost_yuan"] - t["total_cost_yuan"]), 1e-6)
     check("汇总：逐日 total_cost 之和 vs 汇总",
           abs(sum(day["total_cost_yuan"] for day in days) - t["total_cost_yuan"]), 1e-6)
-    check("汇总：逐日 total_cost 之和 vs 求解器 day_cost4",
-          abs(sum(day["total_cost_yuan"] for day in days)
-              - sum(M.day_cost4(first + i, x[first + i], q[first + i], {"z": z[first + i]})[0]
-                    for i in range(len(days)))), 1e-6)
+    recomputed=0.0
+    for i in range(first,len(dates)):
+        if which == "2":
+            pp=q2data["price4_natural"][i]; parts=(pp*natural_x[i],np.zeros(M.T),5*pp*z[i])
+        else:
+            parts=M.natural_settle_parts4(i,natural_x[i],natural_q[i],z[i])
+        recomputed += sum(float(v.sum()) for v in parts)
+    check("汇总：逐日 total_cost 之和 vs 自然日数组复算",
+          abs(sum(day["total_cost_yuan"] for day in days)-recomputed),1e-6)
 
     print()
     print("=" * 88)

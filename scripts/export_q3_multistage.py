@@ -26,8 +26,8 @@ DELIVERY_START = "2025-02-01"
 
 
 def storage_blocks(charge: np.ndarray, discharge: np.ndarray) -> list[dict[str, float | str]]:
-    """模板行口径的六个 4 小时段：t=24k..24k+23 覆盖 [(24k+1)*10, (24k+25)*10) 分钟。"""
-    return [{"time_range": "%s-%s" % (M.clock_min((24 * k + 1) * 10), M.clock_min((24 * k + 25) * 10)),
+    """自然日六个4小时段。"""
+    return [{"time_range": "%s-%s" % (M.clock_min(24*k*10), M.clock_min((24*k+24)*10)),
              "charge_kwh": float(charge[24 * k:24 * k + 24].sum()),
              "discharge_kwh": float(discharge[24 * k:24 * k + 24].sum())} for k in range(6)]
 
@@ -41,8 +41,11 @@ if __name__ == "__main__":
     elapsed = time.perf_counter() - t0
 
     days = sorted(rec)
-    keys = ("x", "q", "z", "c", "g", "w", "S")
-    payload = {k: np.stack([rec[d][k] for d in days]) for k in keys}
+    payload = {k: np.stack([rec[d][k] for d in days]) for k in ("x", "q")}
+    for k in ("c","g","z","w","S"):
+        payload[k] = np.stack([rec[d]["natural"][k] for d in days])
+    payload["natural_x"] = np.stack([rec[d]["natural_x"] for d in days])
+    payload["natural_q"] = np.stack([rec[d]["natural_q"] for d in days])
     payload["S0"] = np.array([rec[d]["S0"] for d in days])
     payload["dates"] = np.array([M.DSTR[d] for d in days])
     np.savez_compressed(OUT / f"detail_stages{tag}_K{K}.npz", **payload)
@@ -55,41 +58,47 @@ if __name__ == "__main__":
     for i in range(start, len(days)):
         d = days[i]
         r = rec[d]
-        s_plan, s_adjust, s_emg = M.settle_parts(r["x"], r["q"], r["z"])
-        total = M.day_cost(r["x"], r["q"], r)[0]
+        template_plan, template_adjust, _ = M.settle_parts(r["x"], r["q"], r["z"])
+        n = r["natural"]
+        s_plan, s_adjust, s_emg = M.natural_settle_parts(r["natural_x"], r["natural_q"], n["z"])
+        total = float(s_plan.sum() + s_adjust.sum() + s_emg.sum())
         residual = abs(float(total - (s_plan.sum() + s_adjust.sum() + s_emg.sum())))
         assert residual < 1e-6, f"{M.DSTR[d]} 费用拆分与总费用不一致：{residual:.3e}"
-        up = float(np.maximum(r["q"] - r["x"], 0).sum())
-        dn = float(np.maximum(r["x"] - r["q"], 0).sum())
+        up = float(np.maximum(r["natural_q"] - r["natural_x"], 0).sum())
+        dn = float(np.maximum(r["natural_x"] - r["natural_q"], 0).sum())
         out_days.append({
             "date": M.DSTR[d],
             "plan_kwh": [float(v) for v in r["x"]],
             "plan_total_kwh": float(r["x"].sum()),
-            "plan_cost_yuan": float(s_plan.sum()),
+            "plan_cost_yuan": float(template_plan.sum()),
             "adjusted_kwh": [float(v) for v in r["q"]],
             "adjusted_total_kwh": float(r["q"].sum()),
-            "adjusted_cost_yuan": float(s_adjust.sum()),
-            "storage_blocks": storage_blocks(r["c"], r["g"]),
+            "adjusted_cost_yuan": float(template_adjust.sum()),
+            "storage_blocks": storage_blocks(n["c"], n["g"]),
             "soc_start_kwh": float(r["S0"]),
-            "soc_end_kwh": float(r["S"][-1]),
-            "emergency_segments": M.emergency_segments(r["z"]),
-            "emergency_total_kwh": float(r["z"].sum()),
+            "soc_end_kwh": float(r["S24"]),
+            "emergency_segments": M.natural_emergency_segments(n["z"]),
+            "emergency_total_kwh": float(n["z"].sum()),
             "emergency_cost_yuan": float(s_emg.sum()),
             "total_cost_yuan": float(total),
+            "natural_day_plan_cost_yuan": float(s_plan.sum()),
+            "natural_day_adjust_cost_yuan": float(s_adjust.sum()),
             "adjust_up_kwh": up, "adjust_down_kwh": dn,
-            "curtail_kwh": float(r["w"].sum()),
+            "curtail_kwh": float(n["w"].sum()),
         })
         for k, v in (("total_cost_yuan", total), ("plan_cost_yuan", s_plan.sum()),
                      ("adjust_cost_yuan", s_adjust.sum()), ("emergency_cost_yuan", s_emg.sum()),
-                     ("emergency_kwh", r["z"].sum()), ("charge_kwh", r["c"].sum()),
-                     ("discharge_kwh", r["g"].sum()), ("curtail_kwh", r["w"].sum()),
+                     ("emergency_kwh", n["z"].sum()), ("charge_kwh", n["c"].sum()),
+                     ("discharge_kwh", n["g"].sum()), ("curtail_kwh", n["w"].sum()),
                      ("adjust_up_kwh", up), ("adjust_down_kwh", dn)):
             totals[k] += float(v)
 
     meta = {"model": "multistage_rolling_SAA_scenario_branched_recourse",
             "storage_convention": "bus_side_charge_and_discharge",
             "soc_recursion": "S[t] = S[t-1] + eta*c[t] - g[t]/eta",
-            "time_frame": "template_row", "scenarios_K": K, "stages": list(stages), "tag": tag,
+            "plan_adjust_time_frame": "template_row_00:10_to_next_00:10",
+            "physical_reporting_time_frame": "natural_day_00:00_to_24:00",
+            "stage0_horizon_intervals": 145, "scenarios_K": K, "stages": list(stages), "tag": tag,
             "elapsed_seconds": elapsed, "eta": M.ETA, "interval_limit_kwh": M.CMAX,
             "delivery_period": {"start": DELIVERY_START, "end": M.DSTR[days[-1]], "days": len(out_days)},
             "totals": totals}

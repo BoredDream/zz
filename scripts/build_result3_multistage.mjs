@@ -1,7 +1,5 @@
 // 用官方附件5模板生成 result3.xlsx（多阶段随机规划模型）。
-// 数据来自 scripts/export_q3_multistage.py 落盘的 payload。
-// 表2 采用"模板行框"：六个段为 t=0..23,24..47,...,120..143，
-// 分别覆盖 0:10-4:10 / 4:10-8:10 / 8:10-12:10 / 12:10-16:10 / 16:10-20:10 / 20:10-0:10+1。
+// 计划/调整表保留模板行；实际充放电、SOC与紧急购电按自然日跨行重组。
 import fs from "node:fs/promises";
 import path from "node:path";
 import { FileBlob, SpreadsheetFile } from "@oai/artifact-tool";
@@ -57,7 +55,7 @@ for (const day of payload.days) {
       block.time_range,
       block.charge_kwh,
       block.discharge_kwh,
-      index === 0 ? "0:10" : index === 1 ? "0:10+1" : null,
+      index === 0 ? "0:00" : index === 1 ? "24:00" : null,
       index === 0 ? day.soc_start_kwh : index === 1 ? day.soc_end_kwh : null,
     ]);
   });

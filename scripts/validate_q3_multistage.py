@@ -41,6 +41,7 @@ def main() -> int:
     detail = np.load(npz_path)
     dates = [str(d) for d in detail["dates"]]
     x, q, z, c, g, w, S = (detail[k] for k in ("x", "q", "z", "c", "g", "w", "S"))
+    natural_x, natural_q = detail["natural_x"], detail["natural_q"]
     S0 = detail["S0"]
     days = payload["days"]
 
@@ -52,23 +53,22 @@ def main() -> int:
     worst = {k: 0.0 for k in ("soc", "balance", "charge_limit", "discharge_limit",
                               "soc_min", "soc_max", "negativity", "cost_split", "soc_start_chain")}
     for i, d in enumerate(dates):
-        prev = float(S0[i])
         for t in range(M.T):
-            now = float(S[i, t])
-            worst["soc"] = max(worst["soc"], abs(now - (prev + M.ETA * c[i, t] - g[i, t] / M.ETA)))
+            now = float(S[i, t+1])
+            worst["soc"] = max(worst["soc"], abs(now - (S[i,t] + M.ETA * c[i, t] - g[i, t] / M.ETA)))
+            ml,mg=M.midnight_actual(i)
+            actual = (ml-mg) if t == 0 else (M.L[i,t-1]-M.G[i,t-1])
             worst["balance"] = max(worst["balance"],
-                                   abs(q[i, t] + z[i, t] + g[i, t] - c[i, t] - w[i, t]
-                                       - (M.L[i, t] - M.G[i, t])))
+                                   abs(natural_q[i,t]+z[i,t]+g[i,t]-c[i,t]-w[i,t]-actual))
             worst["charge_limit"] = max(worst["charge_limit"], c[i, t] - M.CMAX)
             worst["discharge_limit"] = max(worst["discharge_limit"], g[i, t] - M.CMAX)
             worst["soc_min"] = max(worst["soc_min"], M.SMIN - now)
             worst["soc_max"] = max(worst["soc_max"], now - M.SMAX)
             worst["negativity"] = max(worst["negativity"], -min(c[i, t], g[i, t], z[i, t], w[i, t]))
-            prev = now
         if i > 0:
-            worst["soc_start_chain"] = max(worst["soc_start_chain"], abs(float(S0[i]) - float(S[i - 1, M.T - 1])))
-        total, _, _ = M.day_cost(x[i], q[i], {"z": z[i]})
-        p1, p2, p3 = M.settle_parts(x[i], q[i], z[i])
+            worst["soc_start_chain"] = max(worst["soc_start_chain"], abs(float(S0[i]) - float(S[i-1,-1])))
+        total=M.natural_day_cost(natural_x[i],natural_q[i],z[i])
+        p1,p2,p3=M.natural_settle_parts(natural_x[i],natural_q[i],z[i])
         worst["cost_split"] = max(worst["cost_split"], abs(total - (p1.sum() + p2.sum() + p3.sum())))
     for name, value in worst.items():
         check(name, float(value))
@@ -124,15 +124,15 @@ def main() -> int:
                          abs(float(ws.cell(2 + 6 * i, 6).value or 0.0) - day["soc_start_kwh"]),
                          abs(float(ws.cell(3 + 6 * i, 6).value or 0.0) - day["soc_end_kwh"]))
         bad["time"] = max(bad["time"],
-                          0.0 if ws.cell(2 + 6 * i, 5).value == "0:10" else 1.0,
-                          0.0 if ws.cell(3 + 6 * i, 5).value == "0:10+1" else 1.0)
+                          0.0 if ws.cell(2 + 6 * i, 5).value == "0:00" else 1.0,
+                          0.0 if ws.cell(3 + 6 * i, 5).value == "24:00" else 1.0)
     print(f"  [info] 表2 段标签 {expected_labels}")
     check("表2 日期行结构(334×6行)", float(bad["rows"]))
     check("表2 六个段标签", bad["block"])
     check("表2 充电量", bad["charge"])
     check("表2 放电量", bad["discharge"])
     check("表2 时刻列", bad["time"])
-    check("表2 0:10 / 次日0:10 储电量", bad["soc"])
+    check("表2 0:00 / 24:00 储电量", bad["soc"])
 
     ws = wb["紧急购电量"]
     expect = [row for day in days for row in

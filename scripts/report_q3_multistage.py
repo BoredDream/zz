@@ -47,19 +47,19 @@ def load():
 
 def invariants(detail, payload) -> dict[str, float]:
     """重算物理不变量，供报告第 7 节引用（与 validate_q3_multistage.py 相互独立地再算一遍）。"""
-    x, q, z, c, g, w, S = (detail[k] for k in ("x", "q", "z", "c", "g", "w", "S"))
+    x,q,z,c,g,w,S=(detail[k] for k in ("x","q","z","c","g","w","S"))
+    nq=detail["natural_q"]; nx=detail["natural_x"]
     S0 = detail["S0"]
     worst = {"balance": 0.0, "soc": 0.0, "charge_limit": 0.0, "discharge_limit": 0.0,
              "soc_lo": 0.0, "soc_hi": 0.0, "cost_split": 0.0, "simultaneous": 0.0,
              "emg_charge_slots": 0, "emg_charge_kwh": 0.0}
     tol = 1e-6
     for i in range(len(S0)):
-        prev = float(S0[i])
         for t in range(M.T):
-            now = float(S[i, t])
-            worst["soc"] = max(worst["soc"], abs(now - (prev + M.ETA * c[i, t] - g[i, t] / M.ETA)))
-            worst["balance"] = max(worst["balance"], abs(q[i, t] + z[i, t] + g[i, t]
-                                                      - c[i, t] - w[i, t] - (M.L[i, t] - M.G[i, t])))
+            now=float(S[i,t+1])
+            worst["soc"]=max(worst["soc"],abs(now-(S[i,t]+M.ETA*c[i,t]-g[i,t]/M.ETA)))
+            ml,mg=M.midnight_actual(i); actual=(ml-mg) if t==0 else M.L[i,t-1]-M.G[i,t-1]
+            worst["balance"]=max(worst["balance"],abs(nq[i,t]+z[i,t]+g[i,t]-c[i,t]-w[i,t]-actual))
             worst["charge_limit"] = max(worst["charge_limit"], c[i, t] - M.CMAX)
             worst["discharge_limit"] = max(worst["discharge_limit"], g[i, t] - M.CMAX)
             worst["soc_lo"] = max(worst["soc_lo"], M.SMIN - now)
@@ -68,11 +68,10 @@ def invariants(detail, payload) -> dict[str, float]:
             if z[i, t] > tol and c[i, t] > tol:
                 worst["emg_charge_slots"] += 1
                 worst["emg_charge_kwh"] += float(z[i, t])
-            prev = now
-        total = M.day_cost(x[i], q[i], {"z": z[i]})[0]
-        p1, p2, p3 = M.settle_parts(x[i], q[i], z[i])
+        total=M.natural_day_cost(nx[i],nq[i],z[i])
+        p1,p2,p3=M.natural_settle_parts(nx[i],nq[i],z[i])
         worst["cost_split"] = max(worst["cost_split"], abs(total - (p1.sum() + p2.sum() + p3.sum())))
-    # 跨日 SOC 连续性：当日 0:10 储电量应等于前一日「次日 0:10 储电量」
+    # 跨日 SOC 连续性：当日 0:00 等于前一日24:00。
     gaps = 0.0
     for a, b in zip(payload["days"], payload["days"][1:]):
         gaps = max(gaps, abs(a["soc_end_kwh"] - b["soc_start_kwh"]))
@@ -105,8 +104,8 @@ def table2(day: dict) -> list[str]:
     for b in day["storage_blocks"]:
         rows.append(f"| {b['time_range']} | {f(b['charge_kwh'])} | {f(b['discharge_kwh'])} |")
     rows += [
-        f"| 0:10 储电量/kWh | {f(day['soc_start_kwh'])} | |",
-        f"| 次日 0:10 储电量/kWh | {f(day['soc_end_kwh'])} | |",
+        f"| 0:00 储电量/kWh | {f(day['soc_start_kwh'])} | |",
+        f"| 24:00 储电量/kWh | {f(day['soc_end_kwh'])} | |",
     ]
     return rows
 
@@ -151,10 +150,10 @@ def main() -> int:
     A("| 2 | 12:00 | 71 | `[71, 107)` |")
     A("| 3 | 18:00 | 107 | `[107, 144)` |")
     A("")
-    A("三条口径与问题 1/2 完全一致：**模板行时间框**（第 `t` 个时段覆盖 "
+    A("区间起点和物理参数与问题1/2一致，但报表采用双时间框：计划/调整表保留**模板行**（第 `t` 个时段覆盖 "
       "`[(t+1)×10, (t+2)×10)` 分钟，`t=0` 为 0:10–0:20，`t=143` 为次日 0:00–0:10）；"
       "**交流母线侧储能**（`S_t = S_(t-1) + 0.9·c_t − g_t/0.9`，充、放电单时段上限同为 "
-      "`5000/6 = 833.3333` kWh，`S ∈ [1200, 10800]`，初值 6000）；**题面结算口径**")
+      "`5000/6 = 833.3333` kWh，`S ∈ [1200, 10800]`，初值6000）；实际执行、SOC、紧急购电和总费用按自然日0:00–24:00。**题面结算口径**")
     A("")
     A("```")
     A("C_t = p_t·min(x_t, q_t) + 1.5·p_t·(q_t − x_t)^+ + 0.5·p_t·(x_t − q_t)^+ + 5·p_t·z_t")
@@ -163,7 +162,7 @@ def main() -> int:
     A(f"其中 `p_t` 取附件1 的确定分时电价（144 维，范围 {M.P.min():.4f}–{M.P.max():.4f} "
       f"元/kWh，均值 {M.P.mean():.4f}）。")
     A("")
-    A(f"交付期为 {per['start']} 至 {per['end']}，共 {per['days']} 天。"
+    A(f"自然日交付期为 {per['start']} 至 {per['end']}，共 {per['days']} 天。"
       "全年回测自 2025-01-01 起算，前 31 天为预热期，不计入交付期统计。"
       f"情景数 `K = {K}`，末端储能价值 `λ = {M.LAM}`（常数水价）。")
     A("")
@@ -192,7 +191,7 @@ def main() -> int:
     A("## 3. 与旧模型的对照")
     A("")
     A("本模型取代 `src/q3_solver.py`（旧报告已移入 `reports/_archive/`）。"
-      "**两者不可混算**：旧模型用自然日口径 + 跨行映射，本模型用模板行框；"
+      "**两者不可混算**：现行模型已统一为计划模板行与物理自然日双时间框；"
       "旧模型的结算主口径把初始计划费记为沉没成本，本模型用题面口径，"
       "对下调时段的结果不同。")
     A("")
@@ -218,9 +217,7 @@ def main() -> int:
 
     A("## 5. 指定日期：表2 充放电量与储电量")
     A("")
-    A("按题面表2 的格式给出四个日期，六个 4 小时段即 `t=0..23, 24..47, …, 120..143`。"
-      "储电量按模板行口径给出，即该行起点（0:10）与终点（次日 0:10）的储电量，"
-      "与 `result3.xlsx` 的「充放电量」工作表一致。")
+    A("按题面表2的自然日口径给出四个日期：0:00–4:00至20:00–24:00；SOC为0:00与24:00。")
     A("")
     for date in DATES:
         A(f"### {date}")
@@ -280,8 +277,9 @@ def main() -> int:
     A(f"4. 终端储能价值固定为常数水价 `λ = {M.LAM}`，未表达次日清晨负荷与紧急电价风险，"
       "该系数不是由最优性推导唯一确定；未做全年敏感性扫描。")
     A("5. 实时层为贪心规则而非滚动 LP 最优（见第 1 节）。")
-    A("6. 附件3 只给整点光伏预报，10 分钟值是线性插值；发布时刻的插值首节点使用上一区间"
-      "实际值，属于持续性近似。附件未提供负荷预报，日内负荷预测沿用计划日前的历史轮廓。")
+    A("6. 附件3只给整点光伏预报，10分钟值采用以发布时刻为锚点的PCHIP保形插值；"
+      "0:00锚点使用上一已完成区间，其他发布时刻使用当时可测量值。附件未提供负荷预报，"
+      "日内负荷预测沿用计划日前的历史轮廓。")
     A("7. 午夜购电锁定为前一日最后一次提交的次日 00:00 量，属于合同时间假设；"
       "结算口径（逐次提交不退款）需人工确认。")
     A("")
