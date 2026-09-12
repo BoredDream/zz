@@ -1,0 +1,8 @@
+﻿需要的文件,用途（供哪几张图）,必须的列（列名/含义/单位）,行数或范围,状态,关联图号
+interval_detail.csv,interval_detail.csv 全部12列,date 日期 / time_start 时段起点 / price_yuan_per_kwh 电价(元/kWh) / forecast_net_kwh 预测净负荷(kWh) / actual_net_kwh 实际净负荷(kWh) / committed_plan_kwh 已承诺计划购电量(kWh) / charge_kwh 充电量(kWh) / discharge_kwh 放电量(kWh) / soc_start_kwh 时段首储电量(kWh) / soc_end_kwh 时段末储电量(kWh) / emergency_kwh 紧急购电量(kWh) / surplus_kwh 剩余电量(kWh),48096行(334天×144时段),已存在,"图2a,图3a,图3b,图4a,图4b"
+daily_metrics.csv,daily_metrics.csv 全部15列,date / published_plan_kwh / published_plan_cost_yuan / natural_plan_kwh / natural_plan_cost_yuan / emergency_kwh / emergency_cost_yuan / natural_total_cost_yuan / surplus_kwh / soc_start_kwh / soc_end_kwh / forecast_mae_kwh / weekday_weight / residual_window_days / scenario_count,334行,已存在,"图1,图4a,图5"
+附件1_net_load.csv,由附件1换算,"time_label 时刻标签 / price_yuan_per_kwh 电价(元/kWh) / load_kw 负载(kW) / pv_kw 光伏(kW) / net_kwh 净负荷电量(kWh, =（load-pv)/6)",144行,需生成,"图1a,图1b"
+monthly_summary.csv,按月加总,month(YYYY-MM) / plan_kwh / plan_cost_yuan / emergency_kwh / emergency_cost_yuan / emergency_share_pct,11行,需生成,图2b
+sensitivity_terminal.csv,终端价值敏感性,"date / terminal_value_factor(0,1,2) / natural_day_cost_yuan / soc_end_kwh",12行,需生成,图5
+baseline_compare.csv,三策略对比,strategy / total_cost_yuan / planned_cost_yuan / emergency_cost_yuan,3行,需生成,图5
+soc_bound_check.csv,SOC边界触及,date / time_start / soc_start_kwh / touch_lower(0/1) / touch_upper(0/1),仅极值行或48096行,需生成,"图3a,图3b"

@@ -1,0 +1,30 @@
+[
+  {
+    "date": "2025-03-20",
+    "weight": 1.0,
+    "window": 14,
+    "n_scenarios": 14,
+    "center_check_max_abs_err_kwh": 0.0
+  },
+  {
+    "date": "2025-06-21",
+    "weight": 0.75,
+    "window": 14,
+    "n_scenarios": 14,
+    "center_check_max_abs_err_kwh": 0.0
+  },
+  {
+    "date": "2025-09-23",
+    "weight": 0.75,
+    "window": 14,
+    "n_scenarios": 14,
+    "center_check_max_abs_err_kwh": 0.0
+  },
+  {
+    "date": "2025-12-21",
+    "weight": 0.75,
+    "window": 7,
+    "n_scenarios": 7,
+    "center_check_max_abs_err_kwh": 0.0
+  }
+]
