@@ -36,6 +36,7 @@ C_MAIN_D = "#3A5470"    # 深版主色
 C_ACT = "#5B6470"       # 真实值 / 实测值
 C_GREY = "#9AA4AE"      # 普通对照 / 次要数据
 C_GREY_L = "#C9D0D6"    # 浅灰辅助
+C_GREYBLUE = "#91A5B5"  # 浅灰蓝（普通月份柱、次要对照）
 C_ACCENT = "#A9705A"    # 风险 / 最大误差 / 紧急 / 最差结果（全篇唯一强调色）
 C_STATE = "#7E9B84"     # 状态类 / 边界类指标
 C_GRID = "#DFE3E7"      # 网格
@@ -426,44 +427,61 @@ def fig3_2b(d) -> None:
 
 
 def fig3_3a(d) -> None:
+    """图 3-3a 月度费用构成 + 月度弃电量（双面板，严格垂直对齐）。
+
+    视觉逻辑：
+        上：看各月费用水平与三项构成；
+        下：看弃电量月度变化，并一眼识别最高月（仅该月用强调色）。
+    两面板共用同一套月份位置与左右边界（set_xlim 完全一致），
+    子图标题统一置于各自左上角，字号/位置/字体相同。
+    """
     mon = sorted(d["monthly"], key=lambda r: r["month"])
     lbl = [f"{int(r['month'][5:7])}月" for r in mon]
     xx = np.arange(len(mon))
-    pl = np.array([f(r["plan_cost_yuan"]) for r in mon])
-    aj = np.array([f(r["adjust_cost_yuan"]) for r in mon])
-    em = np.array([f(r["emergency_cost_yuan"]) for r in mon])
-    cu = np.array([f(r["curtail_kwh"]) for r in mon])
+    BW = 0.62                                    # 上下同宽（要求 12）
 
-    fig, (a1, a2) = plt.subplots(2, 1, figsize=(7.1, 4.9), sharex=True,
-                                 gridspec_kw=dict(height_ratios=[1.5, 1], hspace=0.16))
-    style(a1); style(a2)
-    a1.bar(xx, pl / 1e4, 0.62, color=C_MAIN, lw=0, label="计划购电费", zorder=Z_DATA)
-    a1.bar(xx, aj / 1e4, 0.62, bottom=pl / 1e4, color=C_GREY, lw=0, label="调整相关费用",
-           zorder=Z_DATA)
-    a1.bar(xx, em / 1e4, 0.62, bottom=(pl + aj) / 1e4, color=C_ACCENT, lw=0,
-           label="紧急购电费", zorder=Z_DATA)
+    pl = np.array([f(r["plan_cost_yuan"]) for r in mon]) / 1e4        # 万元
+    aj = np.array([f(r["adjust_cost_yuan"]) for r in mon]) / 1e4
+    em = np.array([f(r["emergency_cost_yuan"]) for r in mon]) / 1e4
     tot = pl + aj + em
-    k = int(np.argmax(tot))
-    a1.text(xx[k], tot[k] / 1e4 * 1.012, f"{tot[k] / 1e4:.1f} 万元", ha="center", va="bottom",
-            fontsize=FS_NOTE, color=C_TEXT)
-    a1.set_ylabel("费用 / 万元", fontsize=FS_LABEL, color=C_TEXT)
-    a1.set_ylim(0, tot.max() / 1e4 * 1.16)
-    vals = a1.get_yticks()
-    a1.set_yticks(vals)
-    a1.set_yticklabels([f"{v:,.0f}" for v in vals])
-    legend(a1, loc="upper center", ncol=3, bbox_to_anchor=(0.5, 1.035))
-    panel_tag(a1, "(a) 月度费用构成", prefer=("tr", "tl", "br"))
+    cu = np.array([f(r["curtail_kwh"]) for r in mon]) / 1e3           # MWh（1e3 kWh = 1 MWh）
 
-    a2.bar(xx, cu / 1e3, 0.62, color=C_GREY_L, edgecolor=C_GREY, lw=0.6, zorder=Z_DATA)
-    k2 = int(np.argmax(cu))
-    a2.text(xx[k2], cu[k2] / 1e3 * 1.03, f"{cu[k2] / 1e3:.1f}", ha="center", va="bottom",
-            fontsize=FS_NOTE, color=C_TEXT)
-    a2.set_ylabel("弃电量 / (×10³ kWh)", fontsize=FS_LABEL, color=C_TEXT)
-    a2.set_ylim(0, cu.max() / 1e3 * 1.18)
-    a2.set_xticks(xx); a2.set_xticklabels(lbl)
-    for _ax in (a1, a2):
-        _ax.set_xlim(-0.75, len(mon) - 0.05)   # 右侧留白，避免子图标签压柱
-    panel_tag(a2, "(b) 弃电量", prefer=("tr", "tl", "br"))
+    k_cost = int(np.argmax(tot))                 # 费用最高月
+    k_cu = int(np.argmax(cu))                    # 弃电最高月（数据：2025-05）
+
+    fig, (a1, a2) = plt.subplots(
+        2, 1, figsize=(7.1, 4.6),
+        gridspec_kw=dict(height_ratios=[1.25, 1.0], hspace=0.20))    # 缩小上下空白（要求 13）
+    for ax in (a1, a2):
+        style(ax)                                                     # 去上/右边框 + 浅灰水平网格
+        ax.set_xlim(-0.72, len(mon) - 0.28)                           # 左右边界完全一致（要求 12）
+        ax.set_xticks(xx)
+        ax.set_xticklabels(lbl)                                       # 两个面板都显示月份（要求 3）
+
+    # ---------- 上图：堆叠费用（要求 4） ----------
+    a1.bar(xx, pl, BW, color=C_MAIN, lw=0, label="计划购电费", zorder=Z_DATA)
+    a1.bar(xx, aj, BW, bottom=pl, color=C_GREY_L, lw=0, label="调整相关费用", zorder=Z_DATA)
+    a1.bar(xx, em, BW, bottom=pl + aj, color=C_ACCENT, lw=0, label="紧急购电费", zorder=Z_DATA)
+    a1.set_ylim(0, tot.max() * 1.30)                                  # 预留标题与柱顶数值
+    a1.set_ylabel("费用 / 万元", fontsize=FS_LABEL, color=C_TEXT)      # 要求 6
+    a1.text(0.012, 0.975, "(a) 月度费用构成", transform=a1.transAxes, ha="left", va="top",
+            fontsize=FS_PANEL, color=C_TEXT, zorder=Z_NOTE)           # 左上角（要求 1、2）
+    a1.text(xx[k_cost], tot[k_cost] + tot.max() * 0.015, f"{tot[k_cost]:.1f}",
+            ha="center", va="bottom", fontsize=FS_NOTE, color=C_TEXT, zorder=Z_NOTE)  # 只写数值（要求 11）
+    legend(a1, loc="lower center", ncol=3, bbox_to_anchor=(0.5, 1.005),
+           fontsize=FS_NOTE - 0.5)                                    # 单行、小字号、无边框（要求 5）
+
+    # ---------- 下图：弃电量（要求 7–10） ----------
+    cols = [C_GREYBLUE if i != k_cu else C_ACCENT for i in range(len(mon))]
+    a2.bar(xx, cu, BW, color=cols, lw=0, zorder=Z_DATA)               # 普通月灰蓝，仅最高月赤陶
+    a2.set_ylim(0, cu.max() * 1.24)
+    a2.set_ylabel("弃电量 / MWh", fontsize=FS_LABEL, color=C_TEXT)     # 要求 7
+    a2.text(0.012, 0.960, "(b) 月度弃电量", transform=a2.transAxes, ha="left", va="top",
+            fontsize=FS_PANEL, color=C_TEXT, zorder=Z_NOTE)           # 与 (a) 同字号同位置（要求 1、2）
+    a2.text(xx[k_cu], cu[k_cu] + cu.max() * 0.018, f"{cu[k_cu]:.1f}",
+            ha="center", va="bottom", fontsize=FS_NOTE, color=C_TEXT, zorder=Z_NOTE)  # 只写数值（要求 10）
+    a2.set_xlabel("月份", fontsize=FS_LABEL, color=C_TEXT)
+
     save(fig, "fig3_3a_monthly_cost")
 
 
