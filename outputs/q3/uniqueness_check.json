@@ -1,0 +1,323 @@
+{
+  "policy": "6+12+18",
+  "sample": 0,
+  "tie_eps_yuan_per_kwh": 0.0001,
+  "obj_tol_yuan": 0.001,
+  "traj_tol_kwh": 0.001,
+  "checked_issues": 1460,
+  "degenerate_issues": 611,
+  "fidelity": {
+    "total_cost_yuan": {
+      "replayed": 14743406.768488009,
+      "reported": 14743406.768488009,
+      "delta": 0.0
+    },
+    "settlement_cost_yuan": {
+      "replayed": 13940094.948823366,
+      "reported": 13940094.948823366,
+      "delta": 0.0
+    },
+    "emergency_cost_yuan": {
+      "replayed": 803311.8196646414,
+      "reported": 803311.8196646414,
+      "delta": 0.0
+    },
+    "emergency_kwh": {
+      "replayed": 209501.65758584894,
+      "reported": 209501.65758584894,
+      "delta": 0.0
+    }
+  },
+  "fidelity_ok": true,
+  "worst_objective_gap": {
+    "date": "2025-03-06",
+    "issue": "6:00",
+    "mode": "per_submission",
+    "objective_a_yuan": 465.86971064190783,
+    "objective_b_at_original_yuan": 465.87140935866705,
+    "objective_gap_b_vs_a_yuan": 0.001698716759221952,
+    "max_grid_gap_ab_kwh": 0.0,
+    "max_trajectory_gap_ab_kwh": 15.569599999999866,
+    "max_grid_gap_recorded_vs_a_kwh": 0.0,
+    "max_trajectory_gap_recorded_vs_a_kwh": 1.8189894035458565e-12,
+    "degenerate": false
+  },
+  "worst_trajectory_gap": {
+    "date": "2025-03-20",
+    "issue": "6:00",
+    "mode": "per_submission",
+    "objective_a_yuan": 485.93828071045004,
+    "objective_b_at_original_yuan": 485.9382807104498,
+    "objective_gap_b_vs_a_yuan": -2.2737367544323206e-13,
+    "max_grid_gap_ab_kwh": 0.0,
+    "max_trajectory_gap_ab_kwh": 1611.0069029938259,
+    "max_grid_gap_recorded_vs_a_kwh": 0.0,
+    "max_trajectory_gap_recorded_vs_a_kwh": 1660.3548044753093,
+    "degenerate": true
+  },
+  "worst_recorded_vs_a": {
+    "date": "2025-08-16",
+    "issue": "6:00",
+    "mode": "per_submission",
+    "objective_a_yuan": 162.23591384616748,
+    "objective_b_at_original_yuan": 162.23591384616742,
+    "objective_gap_b_vs_a_yuan": -5.684341886080802e-14,
+    "max_grid_gap_ab_kwh": 0.0,
+    "max_trajectory_gap_ab_kwh": 1059.1602374999984,
+    "max_grid_gap_recorded_vs_a_kwh": 0.0,
+    "max_trajectory_gap_recorded_vs_a_kwh": 6283.128292500003,
+    "degenerate": true
+  },
+  "by_mode": {
+    "plan": {
+      "checked": 365,
+      "degenerate": 164,
+      "max_trajectory_gap_kwh": 1536.1598625000015,
+      "max_trajectory_gap_place": "2025-09-06 0:00",
+      "max_objective_gap_yuan": 1.8917489796876907e-10,
+      "max_recorded_vs_a_trajectory_gap_kwh": 5825.531969999999
+    },
+    "per_submission": {
+      "checked": 1095,
+      "degenerate": 447,
+      "max_trajectory_gap_kwh": 1611.0069029938259,
+      "max_trajectory_gap_place": "2025-03-20 6:00",
+      "max_objective_gap_yuan": 0.001698716759221952,
+      "max_recorded_vs_a_trajectory_gap_kwh": 6283.128292500003
+    }
+  },
+  "degenerate_examples": [
+    {
+      "date": "2025-03-20",
+      "issue": "6:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 485.93828071045004,
+      "objective_b_at_original_yuan": 485.9382807104498,
+      "objective_gap_b_vs_a_yuan": -2.2737367544323206e-13,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1611.0069029938259,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 1660.3548044753093,
+      "degenerate": true
+    },
+    {
+      "date": "2025-08-30",
+      "issue": "6:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 396.03535988913194,
+      "objective_b_at_original_yuan": 396.035359889132,
+      "objective_gap_b_vs_a_yuan": 5.684341886080802e-14,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1601.1361374999992,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 3601.9064914814794,
+      "degenerate": true
+    },
+    {
+      "date": "2025-09-06",
+      "issue": "0:00",
+      "mode": "plan",
+      "objective_a_yuan": 25621.43833399167,
+      "objective_b_at_original_yuan": 25621.438333991682,
+      "objective_gap_b_vs_a_yuan": 1.0913936421275139e-11,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1536.1598625000015,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 3401.98563,
+      "degenerate": true
+    },
+    {
+      "date": "2025-05-02",
+      "issue": "12:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 376.37318723109706,
+      "objective_b_at_original_yuan": 376.3731872310972,
+      "objective_gap_b_vs_a_yuan": 1.1368683772161603e-13,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1464.6956250000012,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 689.1656525000017,
+      "degenerate": true
+    },
+    {
+      "date": "2025-06-18",
+      "issue": "12:00",
+      "mode": "per_submission",
+      "objective_a_yuan": -158.87065791894597,
+      "objective_b_at_original_yuan": -158.8706579189459,
+      "objective_gap_b_vs_a_yuan": 5.684341886080802e-14,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1360.3833088888878,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 1710.1393338888902,
+      "degenerate": true
+    },
+    {
+      "date": "2025-12-17",
+      "issue": "6:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 34.565342809919485,
+      "objective_b_at_original_yuan": 34.56534280991946,
+      "objective_gap_b_vs_a_yuan": -2.842170943040401e-14,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1341.6117293518546,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 1338.1606743209904,
+      "degenerate": true
+    },
+    {
+      "date": "2025-02-21",
+      "issue": "12:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 123.02832191356053,
+      "objective_b_at_original_yuan": 123.02832191356063,
+      "objective_gap_b_vs_a_yuan": 9.947598300641403e-14,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1340.4376550000006,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 937.6125975000023,
+      "degenerate": true
+    },
+    {
+      "date": "2025-07-25",
+      "issue": "12:00",
+      "mode": "per_submission",
+      "objective_a_yuan": -229.15367984194418,
+      "objective_b_at_original_yuan": -229.15367984194418,
+      "objective_gap_b_vs_a_yuan": 0.0,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1335.786157499998,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 963.8466231250004,
+      "degenerate": true
+    },
+    {
+      "date": "2025-03-25",
+      "issue": "6:00",
+      "mode": "per_submission",
+      "objective_a_yuan": -104.90762967745076,
+      "objective_b_at_original_yuan": -104.90762967745076,
+      "objective_gap_b_vs_a_yuan": 0.0,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1326.152682067901,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 3189.7575545678997,
+      "degenerate": true
+    },
+    {
+      "date": "2025-05-04",
+      "issue": "6:00",
+      "mode": "per_submission",
+      "objective_a_yuan": 1084.870624757896,
+      "objective_b_at_original_yuan": 1084.8706247578966,
+      "objective_gap_b_vs_a_yuan": 6.821210263296962e-13,
+      "max_grid_gap_ab_kwh": 0.0,
+      "max_trajectory_gap_ab_kwh": 1301.5960448765409,
+      "max_grid_gap_recorded_vs_a_kwh": 0.0,
+      "max_trajectory_gap_recorded_vs_a_kwh": 1787.76132737654,
+      "degenerate": true
+    }
+  ],
+  "sweep": [
+    {
+      "policy": "6+12+18",
+      "config": "HiGHS 默认对偶单纯形（交付口径）",
+      "total_cost_yuan": 14743406.768488009,
+      "settlement_cost_yuan": 13940094.948823366,
+      "emergency_cost_yuan": 803311.8196646414,
+      "emergency_kwh": 209501.65758584894,
+      "accepted_total_cost_yuan": 14743406.768488009,
+      "delta_vs_accepted_yuan": 0.0
+    },
+    {
+      "policy": "6+12+18",
+      "config": "highs-ipm 内点法",
+      "total_cost_yuan": 14712890.319021707,
+      "settlement_cost_yuan": 13932848.901857752,
+      "emergency_cost_yuan": 780041.4171639543,
+      "emergency_kwh": 204405.86797240606,
+      "accepted_total_cost_yuan": 14743406.768488009,
+      "delta_vs_accepted_yuan": -30516.44946630113
+    },
+    {
+      "policy": "6+12+18",
+      "config": "highs-ipm + 吞吐量平局 1e-6",
+      "total_cost_yuan": 14710232.343588213,
+      "settlement_cost_yuan": 13932720.222364385,
+      "emergency_cost_yuan": 777512.1212238275,
+      "emergency_kwh": 203770.4362150282,
+      "accepted_total_cost_yuan": 14743406.768488009,
+      "delta_vs_accepted_yuan": -33174.424899796024
+    },
+    {
+      "policy": "6+12+18",
+      "config": "highs-ipm + 吞吐量平局 1e-5",
+      "total_cost_yuan": 14713230.258084701,
+      "settlement_cost_yuan": 13932679.012860568,
+      "emergency_cost_yuan": 780551.2452241331,
+      "emergency_kwh": 204489.901887284,
+      "accepted_total_cost_yuan": 14743406.768488009,
+      "delta_vs_accepted_yuan": -30176.510403307155
+    },
+    {
+      "policy": "6+12+18",
+      "config": "highs-ipm + 吞吐量平局 1e-4",
+      "total_cost_yuan": 14710109.135139408,
+      "settlement_cost_yuan": 13932173.770791495,
+      "emergency_cost_yuan": 777935.3643479116,
+      "emergency_kwh": 204015.93312506142,
+      "accepted_total_cost_yuan": 14743406.768488009,
+      "delta_vs_accepted_yuan": -33297.63334860094
+    },
+    {
+      "policy": "6+12",
+      "config": "HiGHS 默认对偶单纯形（交付口径）",
+      "total_cost_yuan": 14749689.429844793,
+      "settlement_cost_yuan": 13936875.031092208,
+      "emergency_cost_yuan": 812814.398752585,
+      "emergency_kwh": 211119.97592253712,
+      "accepted_total_cost_yuan": 14749689.429844793,
+      "delta_vs_accepted_yuan": 0.0
+    },
+    {
+      "policy": "6+12",
+      "config": "highs-ipm 内点法",
+      "total_cost_yuan": 14719784.403853884,
+      "settlement_cost_yuan": 13929628.984126592,
+      "emergency_cost_yuan": 790155.4197272926,
+      "emergency_kwh": 206122.40774814374,
+      "accepted_total_cost_yuan": 14749689.429844793,
+      "delta_vs_accepted_yuan": -29905.025990908965
+    },
+    {
+      "policy": "6+12",
+      "config": "highs-ipm + 吞吐量平局 1e-6",
+      "total_cost_yuan": 14716595.713204127,
+      "settlement_cost_yuan": 13929500.72853745,
+      "emergency_cost_yuan": 787094.9846666777,
+      "emergency_kwh": 205402.61098079968,
+      "accepted_total_cost_yuan": 14749689.429844793,
+      "delta_vs_accepted_yuan": -33093.71664066613
+    },
+    {
+      "policy": "6+12",
+      "config": "highs-ipm + 吞吐量平局 1e-5",
+      "total_cost_yuan": 14719707.881100103,
+      "settlement_cost_yuan": 13929459.09512941,
+      "emergency_cost_yuan": 790248.7859706926,
+      "emergency_kwh": 206140.3133682483,
+      "accepted_total_cost_yuan": 14749689.429844793,
+      "delta_vs_accepted_yuan": -29981.548744689673
+    },
+    {
+      "policy": "6+12",
+      "config": "highs-ipm + 吞吐量平局 1e-4",
+      "total_cost_yuan": 14716646.264490735,
+      "settlement_cost_yuan": 13928953.853060337,
+      "emergency_cost_yuan": 787692.4114303984,
+      "emergency_kwh": 205675.34384855517,
+      "accepted_total_cost_yuan": 14749689.429844793,
+      "delta_vs_accepted_yuan": -33043.16535405815
+    }
+  ]
+}
