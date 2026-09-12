@@ -1,0 +1,12 @@
+﻿meta: {"model":"q4_fluctuating_price_two_stage_saa","variant":"3","storage_convention":"bus_side_charge_and_discharge","soc_recursion":"S[t] = S[t-1] + eta*c[t] - g[t]/eta","time_frame":"template_row","settlement_price":"actual_price_附件4","scenarios_K":30,"stages":[0,1,2,3],"elapsed_seconds":399.4060934000008,"eta":0.9,"interval_limit_kwh":833.3333333333333,"delivery_period":{"start":"2025-02-01","end":"2025-12-31","days":334},"totals":{"total_cost_yuan":13823725.786775094,"plan_cost_yuan":12718029.74397702,"adjust_cost_yuan":883540.756379398,"emergency_cost_yuan":222155.28641867012,"emergency_kwh":41355.11119511834,"charge_kwh":6311354.220296829,"discharge_kwh":5112600.579058663,"curtail_kwh":1219773.535480691,"adjust_up_kwh":595747.4800958919,"adjust_down_kwh":290727.9019447535}}
+--- 计划购电量 ---
+{"kind":"table","sheet":"计划购电量","address":"A1","rows":1,"cols":1,"values":[["日期\\时间"]]}
+--- 调整购电量 ---
+{"kind":"table","sheet":"调整购电量","address":"A1","rows":1,"cols":1,"values":[["日期\\时间"]]}
+--- 充放电量 ---
+{"kind":"table","sheet":"充放电量","address":"A1","rows":1,"cols":1,"values":[["日期"]]}
+--- 紧急购电量 ---
+{"kind":"table","sheet":"紧急购电量","address":"A1","rows":1,"cols":1,"values":[["日期"]]}
+{"kind":"notice","message":"Cell search matched 0 entries."}
+Inspect result written to file: C:\Users\admin\Desktop\zz\outputs\q4\result4-3.xlsx.inspect.ndjson
+Saved C:\Users\admin\Desktop\zz\outputs\q4\result4-3.xlsx

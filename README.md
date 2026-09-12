@@ -21,6 +21,12 @@
 - `scripts/build_result3_multistage.mjs`：用官方附件5模板生成第三问 `result3.xlsx`。
 - `scripts/validate_q3_multistage.py`：第三问独立验收（物理约束、费用口径恒等、工作簿逐格对账）。
 - `outputs/q3_multistage/`：第三问正式工作簿与结果。
+- `docs/q4_model.md`：**第四问正式模型**（波动电价）的定义——电价两因子预测（形态×水平×日内AR(1)）、价格/负载/光伏同日配对的联合场景生成、价格加权分位数、变体 4-2/4-3 的差异。
+- `src/q4_solver.py`：第四问求解器，复用第三问的时间网格、母线侧储能口径、实时层与结算口径，替换电价部分。
+- `scripts/export_q4.py`：第四问全年回测与产物落盘（两个变体）。
+- `scripts/build_result4.mjs`：用官方附件5模板生成 `result4-2.xlsx` / `result4-3.xlsx`。
+- `scripts/validate_q4.py`：第四问独立验收（物理约束、费用口径恒等、实际电价核对、工作簿逐格对账）。
+- `outputs/q4/`：第四问工作簿与结果。
 - `docs/q3_model.md`、`docs/q3_derivation.md`：第三问**旧模型**（共同储能轨迹）的模型与推导，保留作对照。
 - `src/q3_solver.py`：第三问旧模型（因果滚动SAA/MPC、共同储能轨迹、8种预报组合、冻结预报基线及结算敏感性回测，含按策略检查点与断点续跑），结果保留在 `outputs/q3/`。
 - `scripts/run_q3.ps1`、`scripts/validate_q3.py`：第三问旧模型的一键生成和独立验收。
@@ -36,10 +42,11 @@
 4. 模板每行是当天0:00发布、覆盖00:10至次日00:00的同一版计划；自然日00:00购电来自上一日计划末列。
 5. 每天0:00制定计划时，只使用已完整出现的历史轮廓；当日实际数据仅在对应时段到达后用于因果储能补救和结算。
 6. 充电量和放电量均定义在交流母线侧，SOC递推为
-   `S[t+1] = S[t] + 0.9*C[t] - D[t]/0.9`。问题1、2、3 均适用。
+   `S[t+1] = S[t] + 0.9*C[t] - D[t]/0.9`。问题1、2、3、4 均适用。
 7. 第三问结算采用题面口径 `C = p*min(x,q) + 1.5p*(q-x)^+ + 0.5p*(x-q)^+ + 5p*z`：
    只对实际取用的电量付基价，下调部分另收50%违约金。"计划费沉没、逐笔计收调整费"
-   是另一种口径，仅作对照，不与本口径混算。
+   是另一种口径，仅作对照，不与本口径混算。第四问沿用同一式，只把 `p` 换成
+   附件4 的**实际**波动电价——预测值只参与决策，不参与结算。
 
 ## 运行
 
@@ -99,6 +106,24 @@ node scripts\build_result3_multistage.mjs 0123 30                              #
 模型定义见 `docs/q3_multistage_model.md`，输出位于 `outputs/q3_multistage/`。
 时间口径为模板行（`t=0` 覆盖 0:10–0:20，`t=143` 覆盖次日 0:00–0:10），
 表 2 的六个段即 `t=0..23, 24..47, …, 120..143`。
+
+## 第四问运行（波动电价）
+
+```powershell
+$env:PYTHONPATH="src"
+# 变体 4-3（对应问题3）：0:00 计划 + 6/12/18 点滚动调整，约 374 s
+.\.venv\Scripts\python.exe -X utf8 scripts\export_q4.py 3 30
+node scripts\build_result4.mjs 3 30
+.\.venv\Scripts\python.exe -X utf8 scripts\validate_q4.py 3 30
+# 变体 4-2（对应问题2）：只在 0:00 决策，q ≡ x
+.\.venv\Scripts\python.exe -X utf8 scripts\export_q4.py 2 30
+node scripts\build_result4.mjs 2 30
+.\.venv\Scripts\python.exe -X utf8 scripts\validate_q4.py 2 30
+```
+
+模型定义见 `docs/q4_model.md`，输出位于 `outputs/q4/`。时间口径、储能口径、
+结算口径与第三问完全一致；差别只在电价：0:00 时当日电价未知，先用电价预测模型
+（形态×水平×日内AR(1)），6/12/18 点用已实现电价滚动修正。
 
 ## 第三问运行（旧模型，保留对照）
 
